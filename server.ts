@@ -4,6 +4,8 @@ import crypto from "crypto";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import fs from "fs/promises";
+import os from "os";
+
 
 dotenv.config();
 
@@ -180,11 +182,11 @@ if (!process.env.VERCEL) {
   });
 }
 
-// Serve uploaded files statically from both uploads and public/uploads (and /tmp/uploads for Vercel)
+// Serve uploaded files statically from both uploads and public/uploads (and the temp uploads directory for Vercel)
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/uploads", express.static(path.join(process.cwd(), "public", "uploads")));
 if (process.env.VERCEL) {
-  app.use("/uploads", express.static("/tmp/uploads"));
+  app.use("/uploads", express.static(path.join(os.tmpdir(), "uploads")));
 }
 
 app.post(["/api/admin/upload-image", "/admin/upload-image"], async (req, res) => {
@@ -226,7 +228,7 @@ app.post(["/api/admin/upload-image", "/admin/upload-image"], async (req, res) =>
     const uniqueFilename = `${base}_${Date.now()}${ext}`;
     
     const uploadDirs = process.env.VERCEL
-      ? ["/tmp/uploads"]
+      ? [path.join(os.tmpdir(), "uploads")]
       : [path.join(process.cwd(), "uploads"), path.join(process.cwd(), "public", "uploads")];
 
     for (const dir of uploadDirs) {
@@ -342,7 +344,7 @@ async function fileExists(filePath: string): Promise<boolean> {
 
 // Helper to read dynamic json files safely across local and Vercel environments
 async function readDynamicFile<T>(filename: string, defaultValue: T): Promise<T> {
-  const tmpPath = path.join("/tmp", filename);
+  const tmpPath = path.join(os.tmpdir(), filename);
   const rootPath = path.join(process.cwd(), filename);
 
   try {
@@ -369,7 +371,7 @@ async function readDynamicFile<T>(filename: string, defaultValue: T): Promise<T>
 // Helper to write dynamic json files safely across local and Vercel environments
 async function writeDynamicFile(filename: string, content: any): Promise<void> {
   const jsonStr = JSON.stringify(content, null, 2);
-  const tmpPath = path.join("/tmp", filename);
+  const tmpPath = path.join(os.tmpdir(), filename);
 
   try {
     await fs.writeFile(tmpPath, jsonStr, "utf-8");
