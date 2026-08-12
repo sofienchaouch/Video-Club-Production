@@ -1350,4 +1350,8 @@ async function bootstrapServer() {
   });
 }
 
-bootstrapServer();
+if (!process.env.VERCEL) {
+  bootstrapServer();
+}
+
+export default app;
