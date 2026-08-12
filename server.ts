@@ -1454,6 +1454,19 @@ app.post(["/api/script-planner", "/script-planner"], async (req, res) => {
   }
 });
 
+// API 404 Fallback
+app.use(["/api/*", "/api"], (req, res) => {
+  res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.originalUrl || req.url}` });
+});
+
+// Global Express Error Handler
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error("[Express Global Error]:", err);
+  if (!res.headersSent) {
+    res.status(500).json({ error: "Internal Server Error", details: err?.message || String(err) });
+  }
+});
+
 // Configure Vite or Serve Static Production assets
 async function bootstrapServer() {
   if (process.env.NODE_ENV !== "production") {
