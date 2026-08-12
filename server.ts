@@ -1,11 +1,83 @@
 import express from "express";
 import path from "path";
+import crypto from "crypto";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import fs from "fs/promises";
 
 dotenv.config();
+
+// Security & Authentication Helpers
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const ADMIN_SECRET = process.env.ADMIN_SECRET || process.env.ADMIN_PASSWORD || "video-club-vault-secret-2026-key";
+
+// In-Memory Rate Limiting for Admin Login
+const loginFailures = new Map<string, { count: number; resetTime: number }>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const record = loginFailures.get(ip);
+  if (!record) return false;
+  if (now > record.resetTime) {
+    loginFailures.delete(ip);
+    return false;
+  }
+  return record.count >= 5; // Lock out after 5 failures in 15 minutes
+}
+
+function recordLoginFailure(ip: string) {
+  const now = Date.now();
+  const record = loginFailures.get(ip) || { count: 0, resetTime: now + 15 * 60 * 1000 };
+  record.count += 1;
+  loginFailures.set(ip, record);
+}
+
+function clearLoginFailure(ip: string) {
+  loginFailures.delete(ip);
+}
+
+// Timing-safe password comparison
+function checkAdminPassword(input: string): boolean {
+  if (!input || typeof input !== "string") return false;
+  const inputBuf = Buffer.from(input, "utf-8");
+  const expectedBuf = Buffer.from(ADMIN_PASSWORD, "utf-8");
+  if (inputBuf.length !== expectedBuf.length) return false;
+  return crypto.timingSafeEqual(inputBuf, expectedBuf);
+}
+
+// Signed session token creation and verification
+function createAdminToken(): string {
+  const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days expiration
+  const payload = `${expiresAt}`;
+  const signature = crypto.createHmac("sha256", ADMIN_SECRET).update(payload).digest("hex");
+  return `${payload}.${signature}`;
+}
+
+function isValidAdminToken(token: any): boolean {
+  if (!token || typeof token !== "string") return false;
+
+  // Backward compatibility with legacy token format
+  if (token === `auth-${ADMIN_PASSWORD}`) return true;
+
+  const parts = token.split(".");
+  if (parts.length !== 2) return false;
+
+  const [expiresAtStr, signature] = parts;
+  const expiresAt = parseInt(expiresAtStr, 10);
+  if (isNaN(expiresAt) || Date.now() > expiresAt) return false;
+
+  const expectedSignature = crypto.createHmac("sha256", ADMIN_SECRET).update(expiresAtStr).digest("hex");
+  
+  try {
+    const sigBuf = Buffer.from(signature, "hex");
+    const expBuf = Buffer.from(expectedSignature, "hex");
+    if (sigBuf.length !== expBuf.length) return false;
+    return crypto.timingSafeEqual(sigBuf, expBuf);
+  } catch {
+    return false;
+  }
+}
 
 const app = express();
 app.use(express.json({ limit: "50mb" }));
@@ -100,8 +172,7 @@ app.post("/api/admin/upload-image", async (req, res) => {
     const { token, filename, base64Data } = req.body;
 
     // Validate admin token
-    const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
-    if (token !== `auth-${expectedPassword}`) {
+    if (!isValidAdminToken(token)) {
       return res.status(401).json({ error: "Unauthorized. Invalid admin token." });
     }
 
@@ -242,11 +313,20 @@ const DYNAMIC_AGENCY_SETTINGS_PATH = path.join(process.cwd(), "dynamic_agency_se
 
 // Admin Login Route
 app.post("/api/admin/login", (req, res) => {
-  const { password } = req.body;
-  const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
-  if (password === expectedPassword) {
-    return res.json({ token: `auth-${expectedPassword}`, success: true });
+  const clientIp = (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || "client-ip";
+  
+  if (isRateLimited(clientIp)) {
+    return res.status(429).json({ error: "Too many failed login attempts. Please try again in 15 minutes." });
   }
+
+  const { password } = req.body;
+  if (checkAdminPassword(password)) {
+    clearLoginFailure(clientIp);
+    const token = createAdminToken();
+    return res.json({ token, success: true });
+  }
+
+  recordLoginFailure(clientIp);
   return res.status(401).json({ error: "Invalid password. Access denied." });
 });
 
@@ -270,8 +350,7 @@ app.post("/api/estimator/config", async (req, res) => {
     const { token, config } = req.body;
 
     // Auth validation
-    const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
-    if (token !== `auth-${expectedPassword}`) {
+    if (!isValidAdminToken(token)) {
       return res.status(401).json({ error: "Unauthorized. Invalid admin token." });
     }
 
@@ -383,8 +462,7 @@ app.post("/api/agency-settings", async (req, res) => {
     const { token, settings } = req.body;
     
     // Auth validation
-    const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
-    if (token !== `auth-${expectedPassword}`) {
+    if (!isValidAdminToken(token)) {
       return res.status(401).json({ error: "Unauthorized. Invalid admin token." });
     }
 
@@ -420,8 +498,7 @@ app.post("/api/translations", async (req, res) => {
     const { token, translations } = req.body;
     
     // Auth validation
-    const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
-    if (token !== `auth-${expectedPassword}`) {
+    if (!isValidAdminToken(token)) {
       return res.status(401).json({ error: "Unauthorized. Invalid admin token." });
     }
 
@@ -1184,8 +1261,7 @@ app.post("/api/leads", async (req, res) => {
 app.get("/api/admin/leads", async (req, res) => {
   try {
     const { token } = req.query;
-    const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
-    if (token !== `auth-${expectedPassword}`) {
+    if (!isValidAdminToken(token)) {
       return res.status(401).json({ error: "Unauthorized. Invalid admin token." });
     }
 
@@ -1201,8 +1277,7 @@ app.get("/api/admin/leads", async (req, res) => {
 app.post("/api/admin/leads/update-status", async (req, res) => {
   try {
     const { token, leadId, status } = req.body;
-    const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
-    if (token !== `auth-${expectedPassword}`) {
+    if (!isValidAdminToken(token)) {
       return res.status(401).json({ error: "Unauthorized. Invalid admin token." });
     }
 
@@ -1230,8 +1305,7 @@ app.post("/api/admin/leads/update-status", async (req, res) => {
 app.post("/api/admin/leads/delete", async (req, res) => {
   try {
     const { token, leadId } = req.body;
-    const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
-    if (token !== `auth-${expectedPassword}`) {
+    if (!isValidAdminToken(token)) {
       return res.status(401).json({ error: "Unauthorized. Invalid admin token." });
     }
 

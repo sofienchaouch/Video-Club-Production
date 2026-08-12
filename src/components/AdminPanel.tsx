@@ -730,9 +730,6 @@ export default function AdminPanel({ onExit }: { onExit: () => void }) {
       <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
         {/* Subtle grid bg */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20"></div>
-        <div className="absolute top-10 right-10 bg-gold-500/10 border border-gold-500/30 px-3 py-1.5 rounded-md text-xs text-gold-400 font-mono flex items-center gap-1.5 z-10">
-          <span>DEFAULT PASSWORD: admin123</span>
-        </div>
 
         <motion.div 
           className="relative max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl z-10"

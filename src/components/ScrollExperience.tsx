@@ -58,17 +58,7 @@ export default function ScrollExperience({ activeSection, onNavigate }: ScrollEx
 
   return (
     <>
-      {/* 1. Global Top Scroll Progress Bar */}
-      <div className="fixed top-0 left-0 right-0 h-[3px] z-[60] bg-zinc-950/20 pointer-events-none">
-        <motion.div
-          className="h-full bg-gradient-to-r from-gold-600 via-gold-400 to-amber-500 shadow-[0_1px_10px_rgba(219,179,116,0.6)]"
-          style={{ width: `${scrollProgress}%` }}
-          layoutId="scrollProgressTop"
-          transition={{ type: "spring", stiffness: 120, damping: 25 }}
-        />
-      </div>
-
-      {/* 2. Floating Vertical Desk Dot Indicator (Scroll Spy) */}
+      {/* Floating Vertical Desk Dot Indicator (Scroll Spy) */}
       <div
         className={`fixed top-1/2 -translate-y-1/2 z-50 hidden lg:flex flex-col gap-5 items-center bg-slate-950/40 backdrop-blur-md border border-zinc-900/60 p-3 rounded-full shadow-2xl py-5 ${
           isRtl ? "left-6" : "right-6"
