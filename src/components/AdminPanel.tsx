@@ -8,6 +8,7 @@ import { googleSignIn, logoutGoogle } from "../lib/googleAuth";
 import { motion, AnimatePresence } from "motion/react";
 import ImageUploader from "./ImageUploader";
 import Logo from "./Logo";
+import { formatGoogleDriveLink } from "../utils/googleDrive";
 import { 
   Lock, 
   Save, 
@@ -2037,12 +2038,14 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                     <div className="h-20 w-full flex items-center justify-center p-2 bg-slate-900/50 border border-dashed border-slate-800 rounded-lg">
                       {settingsBuffer?.agencyLogo ? (
                         <img
-                          src={settingsBuffer.agencyLogo}
+                          key={settingsBuffer.agencyLogo}
+                          src={formatGoogleDriveLink(settingsBuffer.agencyLogo, 'image')}
                           alt="Agency Logo"
                           className="max-h-16 max-w-full object-contain"
                           referrerPolicy="no-referrer"
                           onError={(e) => {
-                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.style.opacity = '0.3';
                           }}
                         />
                       ) : (
@@ -2064,7 +2067,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                         type="text"
                         value={settingsBuffer?.agencyLogo || ""}
                         onChange={(e) => {
-                          const val = e.target.value;
+                          const val = formatGoogleDriveLink(e.target.value, 'image');
                           setSettingsBuffer((prev: any) => ({
                             ...prev,
                             agencyLogo: val
@@ -2158,7 +2161,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                         type="text"
                         value={settingsBuffer?.presentationVideoUrl || ""}
                         onChange={(e) => {
-                          const val = e.target.value;
+                          const val = formatGoogleDriveLink(e.target.value, 'video');
                           setSettingsBuffer((prev: any) => ({
                             ...prev,
                             presentationVideoUrl: val
@@ -2264,7 +2267,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                             type="text"
                             value={val}
                             onChange={(e) => {
-                              const inputVal = e.target.value;
+                              const inputVal = formatGoogleDriveLink(e.target.value, 'image');
                               setSettingsBuffer((prev: any) => {
                                 const arr = [...(prev.heroImages || ["", "", ""])];
                                 arr[idx] = inputVal;
@@ -2357,7 +2360,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                             type="text"
                             value={val}
                             onChange={(e) => {
-                              const inputVal = e.target.value;
+                              const inputVal = formatGoogleDriveLink(e.target.value, 'image');
                               setSettingsBuffer((prev: any) => ({
                                 ...prev,
                                 studioTourImages: {
@@ -2447,7 +2450,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                                 type="text"
                                 value={val}
                                 onChange={(e) => {
-                                  const inputVal = e.target.value;
+                                  const inputVal = formatGoogleDriveLink(e.target.value, 'image');
                                   setSettingsBuffer((prev: any) => ({
                                     ...prev,
                                     portfolioImages: {
@@ -2536,7 +2539,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                               type="text"
                               value={val}
                               onChange={(e) => {
-                                const inputVal = e.target.value;
+                                const inputVal = formatGoogleDriveLink(e.target.value, 'image');
                                 setSettingsBuffer((prev: any) => ({
                                   ...prev,
                                   teamImages: {
@@ -3896,7 +3899,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                     <input
                       type="text"
                       value={editingProject.youtubeId || editingProject.videoUrl || ""}
-                      onChange={(e) => setEditingProject({ ...editingProject, youtubeId: e.target.value, videoUrl: e.target.value })}
+                      onChange={(e) => setEditingProject({ ...editingProject, youtubeId: formatGoogleDriveLink(e.target.value, 'video'), videoUrl: formatGoogleDriveLink(e.target.value, 'video') })}
                       placeholder="YouTube ID (e.g. TuXP4MTPta4) or MP4 URL"
                       className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded text-xs text-white outline-none font-mono focus:border-gold-500/50 mb-2"
                     />
@@ -3914,7 +3917,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                     <input
                       type="text"
                       value={editingProject.visualStill || ""}
-                      onChange={(e) => setEditingProject({ ...editingProject, visualStill: e.target.value })}
+                      onChange={(e) => setEditingProject({ ...editingProject, visualStill: formatGoogleDriveLink(e.target.value, 'image') })}
                       placeholder="https://domain.com/image.jpg"
                       className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded text-xs text-white outline-none font-mono focus:border-gold-500/50 mb-2"
                     />
@@ -4057,7 +4060,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                     <input
                       type="text"
                       value={editingTeamMember.image || ""}
-                      onChange={(e) => setEditingTeamMember({ ...editingTeamMember, image: e.target.value })}
+                      onChange={(e) => setEditingTeamMember({ ...editingTeamMember, image: formatGoogleDriveLink(e.target.value, 'image') })}
                       placeholder="https://domain.com/portrait.jpg"
                       className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded text-xs text-white outline-none font-mono focus:border-gold-500/50 mb-2"
                     />

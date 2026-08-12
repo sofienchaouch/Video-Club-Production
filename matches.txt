@@ -1,0 +1,57 @@
+767:                onChange={(e) => setPassword(e.target.value)}
+1339:                    onChange={(e) => setSearchQuery(e.target.value)}
+1394:                              onChange={(e) => handleFieldChange(key, e.target.value)}
+1421:                              onChange={(e) => handleFieldChange(key, e.target.value)}
+1515:                                      const text = e.target.value;
+1542:                                    onChange={(e) => handleItemBasePriceChange(category.id, item.id, parseFloat(e.target.value) || 0)}
+1553:                                    onChange={(e) => handleItemUnitTypeChange(category.id, item.id, e.target.value)}
+1585:                                    const text = e.target.value;
+1665:                              onChange={(e) => handlePackNestedFieldChange(currentPack.id, "name", selectedLang, e.target.value)}
+1678:                                onChange={(e) => handlePackFieldChange(currentPack.id, "price", parseFloat(e.target.value) || 0)}
+1689:                                onChange={(e) => handlePackFieldChange(currentPack.id, "icon", e.target.value)}
+1707:                              onChange={(e) => handlePackNestedFieldChange(currentPack.id, "badge", selectedLang, e.target.value)}
+1718:                              onChange={(e) => handlePackNestedFieldChange(currentPack.id, "desc", selectedLang, e.target.value)}
+1754:                                  const text = e.target.value;
+1833:                                            onChange={(e) => handlePackSelectionQtyChange(currentPack.id, cat.id, item.id, parseInt(e.target.value) || 1)}
+1918:                          const val = e.target.value;
+1940:                          const val = e.target.value;
+1966:                            const val = e.target.value;
+1983:                            const val = e.target.value;
+2000:                            const val = e.target.value;
+2068:                          const val = e.target.value;
+2162:                          const val = e.target.value;
+2268:                              const inputVal = e.target.value;
+2361:                              const inputVal = e.target.value;
+2451:                                  const inputVal = e.target.value;
+2540:                                const inputVal = e.target.value;
+2606:                        onChange={(e) => setNewPartnerName(e.target.value)}
+2618:                        onChange={(e) => setNewPartnerUrl(e.target.value)}
+2763:                        const val = e.target.value;
+2782:                        const val = e.target.value;
+2801:                        const val = e.target.value;
+2820:                        const val = e.target.value;
+2839:                        const val = e.target.value;
+2858:                        const val = e.target.value;
+3707:                                  onChange={(e) => handleUpdateLeadStatus(lead.id, e.target.value)}
+3818:                        onChange={(e) => setEditingProject({ ...editingProject, title: e.target.value })}
+3828:                        onChange={(e) => setEditingProject({ ...editingProject, client: e.target.value })}
+3840:                        onChange={(e) => setEditingProject({ ...editingProject, category: e.target.value })}
+3856:                        onChange={(e) => setEditingProject({ ...editingProject, year: e.target.value })}
+3866:                        onChange={(e) => setEditingProject({ ...editingProject, duration: e.target.value })}
+3879:                        onChange={(e) => setEditingProject({ ...editingProject, director: e.target.value })}
+3889:                        onChange={(e) => setEditingProject({ ...editingProject, dp: e.target.value })}
+3900:                      onChange={(e) => setEditingProject({ ...editingProject, youtubeId: e.target.value, videoUrl: e.target.value })}
+3918:                      onChange={(e) => setEditingProject({ ...editingProject, visualStill: e.target.value })}
+3934:                      onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
+3945:                      onChange={(e) => setEditingProject({ ...editingProject, tags: e.target.value.split(",").map((s) => s.trim()) })}
+4039:                      onChange={(e) => setEditingTeamMember({ ...editingTeamMember, name: e.target.value })}
+4050:                      onChange={(e) => setEditingTeamMember({ ...editingTeamMember, role: e.target.value })}
+4061:                      onChange={(e) => setEditingTeamMember({ ...editingTeamMember, image: e.target.value })}
+4077:                      onChange={(e) => setEditingTeamMember({ ...editingTeamMember, bio: e.target.value })}
+4088:                      onChange={(e) => setEditingTeamMember({ ...editingTeamMember, specialties: e.target.value.split(",").map((s) => s.trim()) })}
+4187:                        onChange={(e) => setEditingFaq({ ...editingFaq, question: { ...(editingFaq.question || {}), en: e.target.value } })}
+4197:                        onChange={(e) => setEditingFaq({ ...editingFaq, answer: { ...(editingFaq.answer || {}), en: e.target.value } })}
+4214:                        onChange={(e) => setEditingFaq({ ...editingFaq, question: { ...(editingFaq.question || {}), fr: e.target.value } })}
+4224:                        onChange={(e) => setEditingFaq({ ...editingFaq, answer: { ...(editingFaq.answer || {}), fr: e.target.value } })}
+4241:                        onChange={(e) => setEditingFaq({ ...editingFaq, question: { ...(editingFaq.question || {}), ar: e.target.value } })}
+4252:                        onChange={(e) => setEditingFaq({ ...editingFaq, answer: { ...(editingFaq.answer || {}), ar: e.target.value } })}

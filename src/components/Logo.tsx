@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
+import { formatGoogleDriveLink } from "../utils/googleDrive";
 
 interface LogoProps {
   className?: string;
@@ -7,20 +8,25 @@ interface LogoProps {
 }
 
 export default function Logo({ className = "w-auto h-10", variant = "light" }: LogoProps) {
-  const [imgError, setImgError] = React.useState(false);
+  const [imgError, setImgError] = useState(false);
   let customLogoUrl = "";
   try {
     const context = useApp();
     if (context?.agencySettings?.agencyLogo) {
-      customLogoUrl = context.agencySettings.agencyLogo;
+      customLogoUrl = formatGoogleDriveLink(context.agencySettings.agencyLogo, 'image');
     }
   } catch (e) {
     // If rendered outside AppProvider context
   }
 
+  useEffect(() => {
+    setImgError(false);
+  }, [customLogoUrl]);
+
   if (customLogoUrl && !imgError) {
     return (
       <img
+        key={customLogoUrl}
         src={customLogoUrl}
         alt="Video Club Production Logo"
         className={`${className} object-contain`}

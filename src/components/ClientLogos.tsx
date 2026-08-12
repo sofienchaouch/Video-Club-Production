@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "motion/react";
 import { useApp } from "../context/AppContext";
+import { formatGoogleDriveLink } from "../utils/googleDrive";
 
 export default function ClientLogos() {
   const { agencySettings, t, dir } = useApp();
@@ -255,7 +256,7 @@ export default function ClientLogos() {
         name: cl.name || "Partner",
         content: cl.url ? (
           <img
-            src={cl.url}
+            src={formatGoogleDriveLink(cl.url, 'image')}
             alt={cl.name}
             className="max-h-8 sm:max-h-10 max-w-[140px] sm:max-w-[160px] object-contain opacity-40 group-hover:opacity-100 transition-all duration-300 filter grayscale brightness-200"
             referrerPolicy="no-referrer"
