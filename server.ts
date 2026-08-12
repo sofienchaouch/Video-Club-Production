@@ -158,10 +158,12 @@ async function verifyAndRepairUploadAssets() {
   }
 }
 
-// Run self-healing check on boot
-verifyAndRepairUploadAssets().catch((err) => {
-  console.error("Error in verifyAndRepairUploadAssets:", err);
-});
+// Run self-healing check on boot (only in non-serverless environments)
+if (!process.env.VERCEL) {
+  verifyAndRepairUploadAssets().catch((err) => {
+    console.error("Error in verifyAndRepairUploadAssets:", err);
+  });
+}
 
 // Serve uploaded files statically from both uploads and public/uploads
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
@@ -307,13 +309,19 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-const DYNAMIC_TRANSLATIONS_PATH = path.join(process.cwd(), "dynamic_translations.json");
-const DYNAMIC_ESTIMATOR_PATH = path.join(process.cwd(), "dynamic_estimator.json");
-const DYNAMIC_AGENCY_SETTINGS_PATH = path.join(process.cwd(), "dynamic_agency_settings.json");
+const DYNAMIC_TRANSLATIONS_PATH = process.env.VERCEL
+  ? path.join("/tmp", "dynamic_translations.json")
+  : path.join(process.cwd(), "dynamic_translations.json");
+const DYNAMIC_ESTIMATOR_PATH = process.env.VERCEL
+  ? path.join("/tmp", "dynamic_estimator.json")
+  : path.join(process.cwd(), "dynamic_estimator.json");
+const DYNAMIC_AGENCY_SETTINGS_PATH = process.env.VERCEL
+  ? path.join("/tmp", "dynamic_agency_settings.json")
+  : path.join(process.cwd(), "dynamic_agency_settings.json");
 
 // Admin Login Route
 app.post("/api/admin/login", (req, res) => {
-  const clientIp = (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || "client-ip";
+  const clientIp = (req.headers["x-forwarded-for"] as string) || req.socket?.remoteAddress || req.ip || "client-ip";
   
   if (isRateLimited(clientIp)) {
     return res.status(429).json({ error: "Too many failed login attempts. Please try again in 15 minutes." });
@@ -568,7 +576,9 @@ app.post("/api/translate", async (req, res) => {
   }
 });
 
-const DYNAMIC_LEADS_PATH = path.join(process.cwd(), "dynamic_leads.json");
+const DYNAMIC_LEADS_PATH = process.env.VERCEL
+  ? path.join("/tmp", "dynamic_leads.json")
+  : path.join(process.cwd(), "dynamic_leads.json");
 
 // Helper to read leads
 async function readLeads(): Promise<any[]> {
