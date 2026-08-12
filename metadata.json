@@ -1,0 +1,6 @@
+{
+  "name": "Video Club Production",
+  "description": "An elite, cinematic video production boutique agency. Features a stunning work showcase, interactive budgeting tools, and a Gemini-powered creative director assistant for scripts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
