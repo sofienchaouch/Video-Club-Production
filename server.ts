@@ -187,9 +187,9 @@ if (process.env.VERCEL) {
   app.use("/uploads", express.static("/tmp/uploads"));
 }
 
-app.post("/api/admin/upload-image", async (req, res) => {
+app.post(["/api/admin/upload-image", "/admin/upload-image"], async (req, res) => {
   try {
-    const { token, filename, base64Data } = req.body;
+    const { token, filename, base64Data } = req.body || {};
 
     // Validate admin token
     if (!isValidAdminToken(token)) {
@@ -365,8 +365,8 @@ async function writeDynamicFile(filename: string, content: any): Promise<void> {
   }
 
   if (!process.env.VERCEL) {
+    const rootPath = path.join(process.cwd(), filename);
     try {
-      const rootPath = path.join(process.cwd(), filename);
       await fs.writeFile(rootPath, jsonStr, "utf-8");
     } catch (err) {
       console.error(`Error writing to ${rootPath}:`, err);
@@ -375,14 +375,14 @@ async function writeDynamicFile(filename: string, content: any): Promise<void> {
 }
 
 // Admin Login Route
-app.post("/api/admin/login", (req, res) => {
+app.post(["/api/admin/login", "/admin/login"], (req, res) => {
   const clientIp = (req.headers["x-forwarded-for"] as string) || req.socket?.remoteAddress || req.ip || "client-ip";
   
   if (isRateLimited(clientIp)) {
     return res.status(429).json({ error: "Too many failed login attempts. Please try again in 15 minutes." });
   }
 
-  const { password } = req.body;
+  const { password } = req.body || {};
   if (checkAdminPassword(password)) {
     clearLoginFailure(clientIp);
     const token = createAdminToken();
@@ -394,7 +394,7 @@ app.post("/api/admin/login", (req, res) => {
 });
 
 // GET Dynamic Estimator Config
-app.get("/api/estimator/config", async (req, res) => {
+app.get(["/api/estimator/config", "/estimator/config"], async (req, res) => {
   try {
     const data = await readDynamicFile("dynamic_estimator.json", {});
     return res.json(data);
@@ -405,9 +405,9 @@ app.get("/api/estimator/config", async (req, res) => {
 });
 
 // POST Dynamic Estimator Config
-app.post("/api/estimator/config", async (req, res) => {
+app.post(["/api/estimator/config", "/estimator/config"], async (req, res) => {
   try {
-    const { token, config } = req.body;
+    const { token, config } = req.body || {};
 
     // Auth validation
     if (!isValidAdminToken(token)) {
@@ -505,7 +505,7 @@ async function readAgencySettings(): Promise<any> {
 }
 
 // GET Dynamic Agency Settings (Images and Map)
-app.get("/api/agency-settings", async (req, res) => {
+app.get(["/api/agency-settings", "/agency-settings"], async (req, res) => {
   try {
     const settings = await readAgencySettings();
     return res.json(settings);
@@ -516,9 +516,9 @@ app.get("/api/agency-settings", async (req, res) => {
 });
 
 // POST Dynamic Agency Settings (Updates)
-app.post("/api/agency-settings", async (req, res) => {
+app.post(["/api/agency-settings", "/agency-settings"], async (req, res) => {
   try {
-    const { token, settings } = req.body;
+    const { token, settings } = req.body || {};
     
     // Auth validation
     if (!isValidAdminToken(token)) {
@@ -538,7 +538,7 @@ app.post("/api/agency-settings", async (req, res) => {
 });
 
 // GET Dynamic Translations
-app.get("/api/translations", async (req, res) => {
+app.get(["/api/translations", "/translations"], async (req, res) => {
   try {
     const data = await readDynamicFile("dynamic_translations.json", {});
     return res.json(data);
@@ -549,9 +549,9 @@ app.get("/api/translations", async (req, res) => {
 });
 
 // POST Dynamic Translations (Updates)
-app.post("/api/translations", async (req, res) => {
+app.post(["/api/translations", "/translations"], async (req, res) => {
   try {
-    const { token, translations } = req.body;
+    const { token, translations } = req.body || {};
     
     // Auth validation
     if (!isValidAdminToken(token)) {
@@ -571,9 +571,9 @@ app.post("/api/translations", async (req, res) => {
 });
 
 // POST Auto-Translate Endpoint
-app.post("/api/translate", async (req, res) => {
+app.post(["/api/translate", "/translate"], async (req, res) => {
   try {
-    const { text, from, targets } = req.body;
+    const { text, from, targets } = req.body || {};
     if (!text || !from || !targets || !Array.isArray(targets)) {
       return res.status(400).json({ error: "Missing required translation fields: text, from, and targets (array)." });
     }
@@ -1220,7 +1220,7 @@ async function sendGmailNotification(lead: any) {
 }
 
 // GET Google Calendar Free/Busy Busy Times
-app.get("/api/google/calendar-freebusy", async (req, res) => {
+app.get(["/api/google/calendar-freebusy", "/google/calendar-freebusy"], async (req, res) => {
   try {
     const settings = await readAgencySettings();
     const google = settings.googleConnection;
@@ -1261,9 +1261,9 @@ app.get("/api/google/calendar-freebusy", async (req, res) => {
 });
 
 // PUBLIC: Submit a new Lead/Inquiry
-app.post("/api/leads", async (req, res) => {
+app.post(["/api/leads", "/leads"], async (req, res) => {
   try {
-    const leadData = req.body;
+    const leadData = req.body || {};
     if (!leadData || !leadData.name || !leadData.email) {
       return res.status(400).json({ error: "Name and Email are required fields." });
     }
@@ -1309,7 +1309,7 @@ app.post("/api/leads", async (req, res) => {
 });
 
 // ADMIN: Get all Leads
-app.get("/api/admin/leads", async (req, res) => {
+app.get(["/api/admin/leads", "/admin/leads"], async (req, res) => {
   try {
     const { token } = req.query;
     if (!isValidAdminToken(token)) {
@@ -1325,9 +1325,9 @@ app.get("/api/admin/leads", async (req, res) => {
 });
 
 // ADMIN: Update Lead Status
-app.post("/api/admin/leads/update-status", async (req, res) => {
+app.post(["/api/admin/leads/update-status", "/admin/leads/update-status"], async (req, res) => {
   try {
-    const { token, leadId, status } = req.body;
+    const { token, leadId, status } = req.body || {};
     if (!isValidAdminToken(token)) {
       return res.status(401).json({ error: "Unauthorized. Invalid admin token." });
     }
@@ -1353,9 +1353,9 @@ app.post("/api/admin/leads/update-status", async (req, res) => {
 });
 
 // ADMIN: Delete a Lead
-app.post("/api/admin/leads/delete", async (req, res) => {
+app.post(["/api/admin/leads/delete", "/admin/leads/delete"], async (req, res) => {
   try {
-    const { token, leadId } = req.body;
+    const { token, leadId } = req.body || {};
     if (!isValidAdminToken(token)) {
       return res.status(401).json({ error: "Unauthorized. Invalid admin token." });
     }
@@ -1376,9 +1376,9 @@ app.post("/api/admin/leads/delete", async (req, res) => {
 });
 
 // Creative Script & Concept Planner API
-app.post("/api/script-planner", async (req, res) => {
+app.post(["/api/script-planner", "/script-planner"], async (req, res) => {
   try {
-    const { videoType, genre, brandName, mood, audience, description } = req.body;
+    const { videoType, genre, brandName, mood, audience, description } = req.body || {};
 
     if (!description) {
       return res.status(400).json({ error: "A prompt or description is required." });
