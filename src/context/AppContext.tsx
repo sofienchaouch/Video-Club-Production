@@ -67,7 +67,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       "plateau": "/uploads/Firefly_surcetteimageenlevezlesfilsnonsouhaitsacotelevezlesboutsdescotch4327291_1786452883842.png",
       "podcast": "/uploads/studio-podcast.jpg"
     },
-    agencyLogo: "/uploads/Fichier-42x_1786452239382.png",
+    agencyLogo: "/uploads/logo.png",
     presentationVideoUrl: "/uploads/presentation-video.mp4",
     partnerLogos: []
   });

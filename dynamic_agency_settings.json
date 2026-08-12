@@ -1,1 +1,51 @@
-{}
+{
+  "heroImages": [
+    "/uploads/VA_1302227-scaled_1786375964920.jpg",
+    "/uploads/hero-1.jpg",
+    "/uploads/studio-podcast.jpg"
+  ],
+  "mapsLocation": {
+    "iframeQuery": "Video Club Production Ennasr 2 Ariana Tunisia",
+    "directionsUrl": "https://maps.app.goo.gl/wpghGfG57A8rkCd2A",
+    "addressTextAr": "24 نهج خليج القمر، النصر 2، أريانة 2037، تونس",
+    "addressTextEn": "24 Rue Khalij El Kamar, Ennasr 2, Ariana 2037, Tunisia",
+    "addressTextFr": "24 Rue Khalij El Kamar, Ennasr 2, Ariana 2037, Tunisia"
+  },
+  "contactInfo": {
+    "phone": "(+216) 54 610 546",
+    "phoneTel": "+21654610546",
+    "email": "videoclubproduction11@gmail.com",
+    "whatsapp": "https://wa.me/21654610546?text=Bonjour%20Video%20Club%20Production",
+    "instagram": "https://instagram.com/videoclubproduction",
+    "facebook": "https://facebook.com/videoclubproduction",
+    "linkedin": "https://linkedin.com/company/videoclubproduction"
+  },
+  "portfolioImages": {
+    "company-presentation": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
+    "instagram-reels": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=1200&q=80",
+    "fashion-videos": "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=1200&q=80",
+    "youtube-videos": "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&w=1200&q=80",
+    "padel-videos": "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1200&q=80",
+    "interview-videos": "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1200&q=80",
+    "elyssar-haute-couture": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80",
+    "cartagina-heritage-film": "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=1200&q=80",
+    "video-club-showcase-svZNfyC6C78": "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1200&q=80",
+    "auguste-lookbook": "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80"
+  },
+  "teamImages": {},
+  "studioTourImages": {
+    "plateau": "/uploads/Firefly_surcetteimageenlevezlesfilsnonsouhaitsacotelevezlesboutsdescotch4327291_1786375927661.png",
+    "podcast": "/uploads/studio-podcast.jpg"
+  },
+  "agencyLogo": "/uploads/logo.png",
+  "presentationVideoUrl": "/uploads/presentation-video.mp4",
+  "customProjects": [],
+  "customTeam": [],
+  "customFaqs": [],
+  "partnerLogos": [],
+  "googleConnection": {
+    "accessToken": "",
+    "adminEmail": "",
+    "connectedAt": ""
+  }
+}

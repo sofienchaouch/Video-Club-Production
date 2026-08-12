@@ -538,7 +538,7 @@ async function readAgencySettings(): Promise<any> {
       "plateau": "/uploads/Firefly_surcetteimageenlevezlesfilsnonsouhaitsacotelevezlesboutsdescotch4327291_1786375927661.png",
       "podcast": "/uploads/studio-podcast.jpg"
     },
-    agencyLogo: "/uploads/Fichier-42x_1786375982902.png",
+    agencyLogo: "/uploads/logo.png",
     presentationVideoUrl: "/uploads/presentation-video.mp4",
     customProjects: [],
     customTeam: [],
