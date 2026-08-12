@@ -3,6 +3,7 @@ import { TEAM_MEMBERS, sofieneImage, hazemImage } from "../data/agencyData";
 import { Award } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { motion } from "motion/react";
+import { formatGoogleDriveLink } from "../utils/googleDrive";
 
 export default function Team() {
   const { t, data, dir, agencySettings } = useApp();
@@ -21,7 +22,7 @@ export default function Team() {
         bio: customMem?.bio || trans?.bio || member.bio,
         specialties: customMem?.specialties || trans?.specialties || member.specialties,
         selectedWorks: customMem?.selectedWorks || trans?.selectedWorks || member.selectedWorks,
-        image: agencySettings?.teamImages?.[member.id] || customMem?.image || member.image,
+        image: formatGoogleDriveLink(agencySettings?.teamImages?.[member.id] || customMem?.image || member.image, 'image'),
       };
     }),
     ...customTeam.filter((ct: any) => !TEAM_MEMBERS.some((tm) => tm.id === ct.id))

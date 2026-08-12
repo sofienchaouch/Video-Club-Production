@@ -4,6 +4,7 @@ import { CostCategory, CostItem } from "../types";
 import { Calculator, Check, ArrowRight, Sparkles, HelpCircle, RefreshCw, Send, Film, Briefcase, Mic, Tv, Loader2, Calendar, Clock, ShieldCheck, Lock, ChevronLeft, ChevronRight, Trash, Plus, X, Receipt, Info } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { motion } from "motion/react";
+import { formatGoogleDriveLink } from "../utils/googleDrive";
 
 const ICON_MAP = {
   Film,
@@ -931,7 +932,7 @@ export default function BudgetEstimator({ onEstimateSaved }: BudgetEstimatorProp
             {/* Interactive Image Display Area */}
             {STUDIO_VIEWS.map((view) => {
               if (view.id !== activeStudioTab) return null;
-              const viewImage = agencySettings?.studioTourImages?.[view.id] || view.image;
+              const viewImage = formatGoogleDriveLink(agencySettings?.studioTourImages?.[view.id] || view.image, 'image');
 
               return (
                 <div key={view.id} className="relative aspect-[16/10] md:aspect-[16/9] w-full rounded-2xl overflow-hidden border border-zinc-855 bg-zinc-950 group">

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { motion, AnimatePresence } from "motion/react";
+import { formatGoogleDriveLink } from "../utils/googleDrive";
 
 interface WorkShowcaseProps {
   onOpenShowreel: () => void;
@@ -38,32 +39,36 @@ export default function WorkShowcase({ onOpenShowreel }: WorkShowcaseProps) {
   
   // Helper function to dynamically derive the best video thumbnail cover
   const resolveProjectStill = (p: any) => {
+    let raw = "/uploads/p8.jpg";
     // 1. Check if custom override from Admin Settings exists
     if (agencySettings?.portfolioImages?.[p.id]) {
-      return agencySettings.portfolioImages[p.id];
+      raw = agencySettings.portfolioImages[p.id];
     }
     // 2. Check if a valid specific visualStill image is set on the project object
-    if (p.visualStill && typeof p.visualStill === "string" && p.visualStill.trim() !== "" && p.visualStill !== "https://videoclubproduction.com/wp-content/uploads/2025/11/p8.jpg") {
-      return p.visualStill;
+    else if (p.visualStill && typeof p.visualStill === "string" && p.visualStill.trim() !== "" && p.visualStill !== "https://videoclubproduction.com/wp-content/uploads/2025/11/p8.jpg") {
+      raw = p.visualStill;
     }
     // 3. Extract YouTube ID if present and generate high resolution thumbnail
-    let yId = p.youtubeId;
-    const urlToTest = p.youtubeUrl || p.videoUrl || p.url || "";
-    if (!yId && typeof urlToTest === "string") {
-      const match = urlToTest.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
-      if (match) yId = match[1];
+    else {
+      let yId = p.youtubeId;
+      const urlToTest = p.youtubeUrl || p.videoUrl || p.url || "";
+      if (!yId && typeof urlToTest === "string") {
+        const match = urlToTest.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+        if (match) yId = match[1];
+      }
+      if (yId) {
+        raw = `https://img.youtube.com/vi/${yId}/maxresdefault.jpg`;
+      }
     }
-    if (yId) {
-      return `https://img.youtube.com/vi/${yId}/maxresdefault.jpg`;
-    }
-    return "/uploads/p8.jpg";
+    return formatGoogleDriveLink(raw, 'image');
   };
 
   const resolveProjectVideo = (p: any) => {
+    let raw = p.videoUrl;
     if (p.id === "company-presentation" && agencySettings?.presentationVideoUrl) {
-      return agencySettings.presentationVideoUrl;
+      raw = agencySettings.presentationVideoUrl;
     }
-    return p.videoUrl;
+    return formatGoogleDriveLink(raw, 'video');
   };
 
   const translatedWorks = [

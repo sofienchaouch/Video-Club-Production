@@ -439,6 +439,62 @@ app.post(["/api/estimator/config", "/estimator/config"], async (req, res) => {
   }
 });
 
+// Helper to format Google Drive URLs into direct image thumbnail or video stream links
+function formatGoogleDriveUrl(url: string, isVideo = false): string {
+  if (!url || typeof url !== "string") return url;
+  const trimmed = url.trim();
+  if (!trimmed) return trimmed;
+
+  try {
+    let fileId = "";
+
+    // 1. Check for explicit id= parameter anywhere in the query string
+    const idMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (idMatch && idMatch[1]) {
+      fileId = idMatch[1];
+    } else {
+      // 2. Check for path-based file ID (/file/d/FILE_ID, /d/FILE_ID, etc.)
+      const pathMatch = trimmed.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=)|docs\.google\.com\/(?:document|presentation|spreadsheets)\/d\/|lh3\.googleusercontent\.com\/d\/)([a-zA-Z0-9_-]+)/);
+      if (pathMatch && pathMatch[1]) {
+        fileId = pathMatch[1];
+      }
+    }
+
+    if (fileId) {
+      if (isVideo) {
+        return `https://drive.google.com/uc?export=download&id=${fileId}`;
+      }
+      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w2500`;
+    }
+  } catch (e) {
+    console.error("Failed to parse Google Drive link:", e);
+  }
+
+  return trimmed;
+}
+
+// Recursively format any Google Drive URL in a settings payload
+function formatSettingsMediaUrls(data: any): any {
+  if (!data || typeof data !== "object") return data;
+
+  if (Array.isArray(data)) {
+    return data.map(item => formatSettingsMediaUrls(item));
+  }
+
+  const result: any = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (typeof value === "string") {
+      const isVideo = key.toLowerCase().includes("video") || key.toLowerCase().includes("mp4");
+      result[key] = formatGoogleDriveUrl(value, isVideo);
+    } else if (typeof value === "object" && value !== null) {
+      result[key] = formatSettingsMediaUrls(value);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 // Helper to read agency settings
 async function readAgencySettings(): Promise<any> {
   const defaultSettings = {
@@ -496,7 +552,7 @@ async function readAgencySettings(): Promise<any> {
   try {
     const parsed = await readDynamicFile("dynamic_agency_settings.json", null);
     if (parsed && typeof parsed === "object") {
-      return {
+      const merged = {
         ...defaultSettings,
         ...parsed,
         mapsLocation: { ...defaultSettings.mapsLocation, ...(parsed.mapsLocation || {}) },
@@ -510,11 +566,12 @@ async function readAgencySettings(): Promise<any> {
         partnerLogos: parsed.partnerLogos || [],
         googleConnection: { ...defaultSettings.googleConnection, ...(parsed.googleConnection || {}) }
       };
+      return formatSettingsMediaUrls(merged);
     }
   } catch (err) {
     console.error("Error loading agency settings file:", err);
   }
-  return defaultSettings;
+  return formatSettingsMediaUrls(defaultSettings);
 }
 
 // GET Dynamic Agency Settings (Images and Map)
@@ -542,7 +599,8 @@ app.post(["/api/agency-settings", "/agency-settings"], async (req, res) => {
       return res.status(400).json({ error: "Invalid settings object." });
     }
 
-    await writeDynamicFile("dynamic_agency_settings.json", settings);
+    const formattedSettings = formatSettingsMediaUrls(settings);
+    await writeDynamicFile("dynamic_agency_settings.json", formattedSettings);
     return res.json({ success: true, message: "Agency settings updated successfully." });
   } catch (err: any) {
     console.error("Error saving custom agency settings:", err);

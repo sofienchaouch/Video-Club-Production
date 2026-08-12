@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Play, Sparkles, Film, ArrowDown, ChevronLeft, ChevronRight, Compass, HelpCircle, Workflow } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { motion, AnimatePresence } from "motion/react";
+import { formatGoogleDriveLink } from "../utils/googleDrive";
 
 interface HeroProps {
   onPlayShowreel: () => void;
@@ -20,7 +21,7 @@ export default function Hero({ onPlayShowreel, onExploreWork }: HeroProps) {
       label: t("about_label"),
       title: t("about_title"),
       desc: t("about_desc"),
-      bgImage: agencySettings?.heroImages?.[0] || "/uploads/hero-1.jpg",
+      bgImage: formatGoogleDriveLink(agencySettings?.heroImages?.[0] || "/uploads/hero-1.jpg", 'image'),
       badge: language === "ar" ? "رؤيتنا الإبداعية" : language === "fr" ? "NOTRE VISION CRÉATIVE" : "THE CREATIVE VISION",
       accent: "text-amber-400 border-amber-500/20 bg-amber-500/10",
       icon: Compass
@@ -30,7 +31,7 @@ export default function Hero({ onPlayShowreel, onExploreWork }: HeroProps) {
       label: t("why_us_title"),
       title: language === "ar" ? "لماذا فيديو كلوب بروداكشن؟" : t("why_us_title"),
       desc: t("why_us_desc"),
-      bgImage: agencySettings?.heroImages?.[1] || "/uploads/studio-plateau.jpg",
+      bgImage: formatGoogleDriveLink(agencySettings?.heroImages?.[1] || "/uploads/studio-plateau.jpg", 'image'),
       badge: language === "ar" ? "القيمة المضافة" : language === "fr" ? "L'AVANTAGE CONCURRENTIEL" : "THE ADVANTAGE",
       accent: "text-blue-400 border-blue-500/20 bg-blue-500/10",
       icon: HelpCircle
@@ -40,7 +41,7 @@ export default function Hero({ onPlayShowreel, onExploreWork }: HeroProps) {
       label: t("how_we_work_title"),
       title: language === "ar" ? "سير العمل المتكامل" : t("how_we_work_title"),
       desc: t("how_we_work_desc"),
-      bgImage: agencySettings?.heroImages?.[2] || "/uploads/studio-podcast.jpg",
+      bgImage: formatGoogleDriveLink(agencySettings?.heroImages?.[2] || "/uploads/studio-podcast.jpg", 'image'),
       badge: language === "ar" ? "منهجية العمل" : language === "fr" ? "NOTRE MÉTHODE DE TRAVAIL" : "THE WORKFLOW",
       accent: "text-teal-400 border-teal-500/20 bg-teal-500/10",
       icon: Workflow
