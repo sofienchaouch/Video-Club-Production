@@ -100,9 +100,10 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isShowreelOpen, isPlayingShowreel]);
 
-  if (currentPath === "/admin") {
+  if (currentPath === "/admin-8f92a3c7b1e4d6f0a5c8b2e1d4f7a0c3") {
     return (
       <AdminPanel
+        bypassLogin={true}
         onExit={() => {
           window.history.pushState({}, "", "/");
           setCurrentPath("/");

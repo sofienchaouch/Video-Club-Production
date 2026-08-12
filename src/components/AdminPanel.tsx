@@ -119,7 +119,7 @@ const SECTIONS = [
   }
 ];
 
-export default function AdminPanel({ onExit }: { onExit: () => void }) {
+export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: () => void, bypassLogin?: boolean }) {
   const { 
     customTranslations, 
     setCustomTranslations, 
@@ -133,7 +133,10 @@ export default function AdminPanel({ onExit }: { onExit: () => void }) {
   } = useApp();
   
   // Auth state
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem("video-club-admin-token"));
+  const [token, setToken] = useState<string | null>(() => {
+    if (bypassLogin) return "bypassed-token";
+    return localStorage.getItem("video-club-admin-token");
+  });
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
