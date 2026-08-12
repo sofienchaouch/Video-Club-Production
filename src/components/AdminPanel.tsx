@@ -339,7 +339,13 @@ export default function AdminPanel({ onExit }: { onExit: () => void }) {
         body: JSON.stringify({ password })
       });
 
-      const data = await response.json();
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch (e) {
+        data = { error: `Server response error (${response.status} ${response.statusText || 'Unable to parse server response'})` };
+      }
+
       if (response.ok && data.token) {
         localStorage.setItem("video-club-admin-token", data.token);
         setToken(data.token);
