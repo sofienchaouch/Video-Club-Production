@@ -81,6 +81,20 @@ function isValidAdminToken(token: any): boolean {
 }
 
 const app = express();
+
+// Body Parser Middleware for Vercel and Express compatibility
+app.use((req: any, res, next) => {
+  if (req.body) {
+    if (typeof req.body === "string") {
+      try {
+        req.body = JSON.parse(req.body);
+      } catch (e) {}
+    }
+    req._body = true; // Prevents express.json() from re-reading an already parsed body stream
+  }
+  next();
+});
+
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
@@ -166,9 +180,12 @@ if (!process.env.VERCEL) {
   });
 }
 
-// Serve uploaded files statically from both uploads and public/uploads
+// Serve uploaded files statically from both uploads and public/uploads (and /tmp/uploads for Vercel)
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/uploads", express.static(path.join(process.cwd(), "public", "uploads")));
+if (process.env.VERCEL) {
+  app.use("/uploads", express.static("/tmp/uploads"));
+}
 
 app.post("/api/admin/upload-image", async (req, res) => {
   try {
@@ -207,17 +224,17 @@ app.post("/api/admin/upload-image", async (req, res) => {
     const ext = path.extname(filename) || ".png";
     const base = path.basename(filename, ext).replace(/[^a-zA-Z0-9_-]/g, "");
     const uniqueFilename = `${base}_${Date.now()}${ext}`;
-    const uploadDir1 = path.join(process.cwd(), "uploads");
-    const uploadDir2 = path.join(process.cwd(), "public", "uploads");
+    
+    const uploadDirs = process.env.VERCEL
+      ? ["/tmp/uploads"]
+      : [path.join(process.cwd(), "uploads"), path.join(process.cwd(), "public", "uploads")];
 
-    await fs.mkdir(uploadDir1, { recursive: true });
-    await fs.mkdir(uploadDir2, { recursive: true });
-
-    const targetPath1 = path.join(uploadDir1, uniqueFilename);
-    const targetPath2 = path.join(uploadDir2, uniqueFilename);
-
-    await fs.writeFile(targetPath1, buffer);
-    await fs.writeFile(targetPath2, buffer);
+    for (const dir of uploadDirs) {
+      await fs.mkdir(dir, { recursive: true }).catch(() => {});
+      await fs.writeFile(path.join(dir, uniqueFilename), buffer).catch((err) => {
+        console.error(`Failed to write image to ${dir}:`, err);
+      });
+    }
 
     const fileUrl = `/uploads/${uniqueFilename}`;
     console.log(`Image uploaded successfully: ${fileUrl} (${buffer.length} bytes)`);
@@ -310,15 +327,52 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-const DYNAMIC_TRANSLATIONS_PATH = process.env.VERCEL
-  ? path.join("/tmp", "dynamic_translations.json")
-  : path.join(process.cwd(), "dynamic_translations.json");
-const DYNAMIC_ESTIMATOR_PATH = process.env.VERCEL
-  ? path.join("/tmp", "dynamic_estimator.json")
-  : path.join(process.cwd(), "dynamic_estimator.json");
-const DYNAMIC_AGENCY_SETTINGS_PATH = process.env.VERCEL
-  ? path.join("/tmp", "dynamic_agency_settings.json")
-  : path.join(process.cwd(), "dynamic_agency_settings.json");
+// Helper to read dynamic json files safely across local and Vercel environments
+async function readDynamicFile<T>(filename: string, defaultValue: T): Promise<T> {
+  const tmpPath = path.join("/tmp", filename);
+  const rootPath = path.join(process.cwd(), filename);
+
+  try {
+    if (await fileExists(tmpPath)) {
+      const data = await fs.readFile(tmpPath, "utf-8");
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    // Continue to fallback
+  }
+
+  try {
+    if (await fileExists(rootPath)) {
+      const data = await fs.readFile(rootPath, "utf-8");
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    // Return default
+  }
+
+  return defaultValue;
+}
+
+// Helper to write dynamic json files safely across local and Vercel environments
+async function writeDynamicFile(filename: string, content: any): Promise<void> {
+  const jsonStr = JSON.stringify(content, null, 2);
+  const tmpPath = path.join("/tmp", filename);
+
+  try {
+    await fs.writeFile(tmpPath, jsonStr, "utf-8");
+  } catch (err) {
+    console.error(`Error writing to ${tmpPath}:`, err);
+  }
+
+  if (!process.env.VERCEL) {
+    try {
+      const rootPath = path.join(process.cwd(), filename);
+      await fs.writeFile(rootPath, jsonStr, "utf-8");
+    } catch (err) {
+      console.error(`Error writing to ${rootPath}:`, err);
+    }
+  }
+}
 
 // Admin Login Route
 app.post("/api/admin/login", (req, res) => {
@@ -342,11 +396,8 @@ app.post("/api/admin/login", (req, res) => {
 // GET Dynamic Estimator Config
 app.get("/api/estimator/config", async (req, res) => {
   try {
-    if (await fileExists(DYNAMIC_ESTIMATOR_PATH)) {
-      const data = await fs.readFile(DYNAMIC_ESTIMATOR_PATH, "utf-8");
-      return res.json(JSON.parse(data));
-    }
-    return res.json({}); // Return empty if no custom configurations yet
+    const data = await readDynamicFile("dynamic_estimator.json", {});
+    return res.json(data);
   } catch (err: any) {
     console.error("Error reading custom estimator config:", err);
     return res.status(500).json({ error: "Failed to load custom estimator config." });
@@ -367,7 +418,7 @@ app.post("/api/estimator/config", async (req, res) => {
       return res.status(400).json({ error: "Invalid estimator config object." });
     }
 
-    await fs.writeFile(DYNAMIC_ESTIMATOR_PATH, JSON.stringify(config, null, 2), "utf-8");
+    await writeDynamicFile("dynamic_estimator.json", config);
     return res.json({ success: true, message: "Estimator configuration updated successfully." });
   } catch (err: any) {
     console.error("Error saving custom estimator config:", err);
@@ -430,9 +481,8 @@ async function readAgencySettings(): Promise<any> {
   };
 
   try {
-    if (await fileExists(DYNAMIC_AGENCY_SETTINGS_PATH)) {
-      const data = await fs.readFile(DYNAMIC_AGENCY_SETTINGS_PATH, "utf-8");
-      const parsed = JSON.parse(data);
+    const parsed = await readDynamicFile("dynamic_agency_settings.json", null);
+    if (parsed && typeof parsed === "object") {
       return {
         ...defaultSettings,
         ...parsed,
@@ -479,7 +529,7 @@ app.post("/api/agency-settings", async (req, res) => {
       return res.status(400).json({ error: "Invalid settings object." });
     }
 
-    await fs.writeFile(DYNAMIC_AGENCY_SETTINGS_PATH, JSON.stringify(settings, null, 2), "utf-8");
+    await writeDynamicFile("dynamic_agency_settings.json", settings);
     return res.json({ success: true, message: "Agency settings updated successfully." });
   } catch (err: any) {
     console.error("Error saving custom agency settings:", err);
@@ -490,11 +540,8 @@ app.post("/api/agency-settings", async (req, res) => {
 // GET Dynamic Translations
 app.get("/api/translations", async (req, res) => {
   try {
-    if (await fileExists(DYNAMIC_TRANSLATIONS_PATH)) {
-      const data = await fs.readFile(DYNAMIC_TRANSLATIONS_PATH, "utf-8");
-      return res.json(JSON.parse(data));
-    }
-    return res.json({}); // Default empty if no customized translations exist yet
+    const data = await readDynamicFile("dynamic_translations.json", {});
+    return res.json(data);
   } catch (err: any) {
     console.error("Error reading custom translations:", err);
     return res.status(500).json({ error: "Failed to load custom translations." });
@@ -515,7 +562,7 @@ app.post("/api/translations", async (req, res) => {
       return res.status(400).json({ error: "Invalid translations object." });
     }
 
-    await fs.writeFile(DYNAMIC_TRANSLATIONS_PATH, JSON.stringify(translations, null, 2), "utf-8");
+    await writeDynamicFile("dynamic_translations.json", translations);
     return res.json({ success: true, message: "Translations updated successfully." });
   } catch (err: any) {
     console.error("Error saving custom translations:", err);
@@ -577,18 +624,11 @@ app.post("/api/translate", async (req, res) => {
   }
 });
 
-const DYNAMIC_LEADS_PATH = process.env.VERCEL
-  ? path.join("/tmp", "dynamic_leads.json")
-  : path.join(process.cwd(), "dynamic_leads.json");
-
 // Helper to read leads
 async function readLeads(): Promise<any[]> {
   try {
-    if (await fileExists(DYNAMIC_LEADS_PATH)) {
-      const data = await fs.readFile(DYNAMIC_LEADS_PATH, "utf-8");
-      return JSON.parse(data);
-    }
-    return [];
+    const data = await readDynamicFile("dynamic_leads.json", []);
+    return Array.isArray(data) ? data : [];
   } catch (err) {
     console.error("Error reading leads file, returning empty array:", err);
     return [];
@@ -597,7 +637,7 @@ async function readLeads(): Promise<any[]> {
 
 // Helper to write leads
 async function writeLeads(leads: any[]): Promise<void> {
-  await fs.writeFile(DYNAMIC_LEADS_PATH, JSON.stringify(leads, null, 2), "utf-8");
+  await writeDynamicFile("dynamic_leads.json", leads);
 }
 
 // Helper to get or dynamically create the Google Sheets leads database
@@ -620,7 +660,7 @@ async function getOrCreateLeadsSpreadsheet(accessToken: string): Promise<string>
         const existingId = searchData.files[0].id;
         // Persist spreadsheet ID in agency settings
         settings.googleConnection.leadsSpreadsheetId = existingId;
-        await fs.writeFile(DYNAMIC_AGENCY_SETTINGS_PATH, JSON.stringify(settings, null, 2), "utf-8");
+        await writeDynamicFile("dynamic_agency_settings.json", settings);
         return existingId;
       }
     }
@@ -647,7 +687,7 @@ async function getOrCreateLeadsSpreadsheet(accessToken: string): Promise<string>
 
     // Persist spreadsheet ID
     settings.googleConnection.leadsSpreadsheetId = newId;
-    await fs.writeFile(DYNAMIC_AGENCY_SETTINGS_PATH, JSON.stringify(settings, null, 2), "utf-8");
+    await writeDynamicFile("dynamic_agency_settings.json", settings);
 
     // 3. Write header row
     const headers = [
@@ -752,7 +792,7 @@ async function getOrCreateDriveFolder(accessToken: string): Promise<string> {
       if (searchData.files && searchData.files.length > 0) {
         const existingId = searchData.files[0].id;
         settings.googleConnection.briefsFolderId = existingId;
-        await fs.writeFile(DYNAMIC_AGENCY_SETTINGS_PATH, JSON.stringify(settings, null, 2), "utf-8");
+        await writeDynamicFile("dynamic_agency_settings.json", settings);
         return existingId;
       }
     }
@@ -780,7 +820,7 @@ async function getOrCreateDriveFolder(accessToken: string): Promise<string> {
 
     // Persist briefs folder ID
     settings.googleConnection.briefsFolderId = folderId;
-    await fs.writeFile(DYNAMIC_AGENCY_SETTINGS_PATH, JSON.stringify(settings, null, 2), "utf-8");
+    await writeDynamicFile("dynamic_agency_settings.json", settings);
 
     return folderId;
   } catch (err) {

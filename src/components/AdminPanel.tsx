@@ -189,22 +189,33 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
     if (!token) return;
     setIsSavingSettings(true);
     setSettingsSaveStatus("saving");
+    setSaveStatus("saving");
+    setErrorMessage("");
     try {
       const response = await fetch("/api/agency-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, settings: settingsBuffer })
       });
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
         setSettingsSaveStatus("success");
+        setSaveStatus("success");
         await reloadAgencySettings();
-        setTimeout(() => setSettingsSaveStatus("idle"), 3000);
+        setTimeout(() => {
+          setSettingsSaveStatus("idle");
+          setSaveStatus("idle");
+        }, 3000);
       } else {
         setSettingsSaveStatus("error");
+        setSaveStatus("error");
+        setErrorMessage(data.error || "Failed to save agency settings.");
       }
     } catch (err) {
       console.error("Error saving agency settings:", err);
       setSettingsSaveStatus("error");
+      setSaveStatus("error");
+      setErrorMessage("Network error saving agency settings.");
     } finally {
       setIsSavingSettings(false);
     }
@@ -974,12 +985,20 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
 
           {/* Save modifications */}
           <button
-            onClick={adminMode === "estimator" ? handleSaveEstimator : handleSaveChanges}
-            disabled={saveStatus === "saving"}
+            onClick={() => {
+              if (adminMode === "estimator") {
+                handleSaveEstimator();
+              } else if (adminMode === "translations") {
+                handleSaveChanges();
+              } else {
+                handleSaveAgencySettings();
+              }
+            }}
+            disabled={saveStatus === "saving" || isSavingSettings}
             className="px-5 py-2.5 bg-gradient-to-r from-gold-500 to-gold-400 text-slate-950 font-display font-bold text-xs tracking-widest uppercase rounded-lg shadow-md shadow-gold-500/10 hover:shadow-gold-500/25 active:scale-[0.98] transition-all cursor-pointer flex items-center gap-2"
           >
             <Save className="w-4 h-4" />
-            {saveStatus === "saving" ? "Syncing..." : "Publish Content"}
+            {saveStatus === "saving" || isSavingSettings ? "Syncing..." : "Publish Content"}
           </button>
 
           {/* Log out */}
