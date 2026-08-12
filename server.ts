@@ -221,7 +221,7 @@ app.post(["/api/admin/upload-image", "/admin/upload-image"], async (req, res) =>
     }
 
     // Generate unique name
-    const ext = path.extname(filename) || ".png";
+    const ext = (path.extname(filename) || ".png").toLowerCase();
     const base = path.basename(filename, ext).replace(/[^a-zA-Z0-9_-]/g, "");
     const uniqueFilename = `${base}_${Date.now()}${ext}`;
     
@@ -236,8 +236,21 @@ app.post(["/api/admin/upload-image", "/admin/upload-image"], async (req, res) =>
       });
     }
 
-    const fileUrl = `/uploads/${uniqueFilename}`;
-    console.log(`Image uploaded successfully: ${fileUrl} (${buffer.length} bytes)`);
+    // Determine mime type for data URL fallback on serverless platforms
+    let mimeType = "image/png";
+    if (ext === ".jpg" || ext === ".jpeg") mimeType = "image/jpeg";
+    else if (ext === ".webp") mimeType = "image/webp";
+    else if (ext === ".svg") mimeType = "image/svg+xml";
+    else if (ext === ".gif") mimeType = "image/gif";
+    else if (ext === ".mp4") mimeType = "video/mp4";
+    else if (ext === ".webm") mimeType = "video/webm";
+
+    // On Vercel, return Base64 Data URL so the image persists in settings JSON without ephemeral disk dependency
+    const fileUrl = process.env.VERCEL 
+      ? `data:${mimeType};base64,${pureBase64}`
+      : `/uploads/${uniqueFilename}`;
+
+    console.log(`Image processed successfully: ${uniqueFilename} (${buffer.length} bytes, Vercel=${!!process.env.VERCEL})`);
     return res.json({ success: true, url: fileUrl });
   } catch (err: any) {
     console.error("Error handling image upload:", err);
@@ -430,7 +443,7 @@ app.post(["/api/estimator/config", "/estimator/config"], async (req, res) => {
 async function readAgencySettings(): Promise<any> {
   const defaultSettings = {
     heroImages: [
-      "/uploads/VA_1302227-scaled_1786452312112.jpg",
+      "/uploads/VA_1302227-scaled_1786375964920.jpg",
       "/uploads/hero-1.jpg",
       "/uploads/studio-podcast.jpg"
     ],
@@ -451,11 +464,11 @@ async function readAgencySettings(): Promise<any> {
       linkedin: "https://linkedin.com/company/videoclubproduction"
     },
     portfolioImages: {
-      "company-presentation": "/uploads/two-diverse-businessmen-making-a-pitch-during-a-meeting-with-shareholders-after-hours-presenting-budget-numbers-and-other-resources-discussing-multinational-company-growth-strategy-camera-a-video_1786452512234.jpg",
-      "instagram-reels": "/uploads/reels-logo_1786452504898.webp",
+      "company-presentation": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
+      "instagram-reels": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=1200&q=80",
       "fashion-videos": "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=1200&q=80",
-      "youtube-videos": "/uploads/yt_1786452504238.jpeg",
-      "padel-videos": "/uploads/GettyImages-1423558556_1786452503737.avif",
+      "youtube-videos": "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&w=1200&q=80",
+      "padel-videos": "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1200&q=80",
       "interview-videos": "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1200&q=80",
       "elyssar-haute-couture": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80",
       "cartagina-heritage-film": "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=1200&q=80",
@@ -464,10 +477,10 @@ async function readAgencySettings(): Promise<any> {
     },
     teamImages: {},
     studioTourImages: {
-      "plateau": "/uploads/Firefly_surcetteimageenlevezlesfilsnonsouhaitsacotelevezlesboutsdescotch4327291_1786452883842.png",
+      "plateau": "/uploads/Firefly_surcetteimageenlevezlesfilsnonsouhaitsacotelevezlesboutsdescotch4327291_1786375927661.png",
       "podcast": "/uploads/studio-podcast.jpg"
     },
-    agencyLogo: "/uploads/Fichier-42x_1786452239382.png",
+    agencyLogo: "/uploads/Fichier-42x_1786375982902.png",
     presentationVideoUrl: "/uploads/presentation-video.mp4",
     customProjects: [],
     customTeam: [],

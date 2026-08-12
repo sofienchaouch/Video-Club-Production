@@ -2,7 +2,11 @@
   "version": 2,
   "functions": {
     "api/index.ts": {
-      "includeFiles": "dynamic_*.json"
+      "includeFiles": [
+        "dynamic_*.json",
+        "public/uploads/**",
+        "uploads/**"
+      ]
     }
   },
   "rewrites": [
