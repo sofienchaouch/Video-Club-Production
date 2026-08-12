@@ -1,7 +1,6 @@
 import express from "express";
 import path from "path";
 import crypto from "crypto";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import fs from "fs/promises";
@@ -1416,6 +1415,7 @@ app.post("/api/script-planner", async (req, res) => {
 // Configure Vite or Serve Static Production assets
 async function bootstrapServer() {
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
