@@ -328,12 +328,12 @@ export default function BudgetEstimator({ onEstimateSaved }: BudgetEstimatorProp
     "post-production": false,
   });
 
-  const isInitialStepMount = React.useRef(true);
+  const prevWizardStepRef = React.useRef(wizardStep);
   React.useEffect(() => {
-    if (isInitialStepMount.current) {
-      isInitialStepMount.current = false;
+    if (prevWizardStepRef.current === wizardStep) {
       return;
     }
+    prevWizardStepRef.current = wizardStep;
     const timer = setTimeout(() => {
       const el = document.getElementById("budget-wizard-container");
       if (el) {
