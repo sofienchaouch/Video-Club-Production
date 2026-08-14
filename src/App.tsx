@@ -103,7 +103,7 @@ export default function App() {
   if (currentPath === "/admin-8f92a3c7b1e4d6f0a5c8b2e1d4f7a0c3") {
     return (
       <AdminPanel
-        bypassLogin={true}
+        bypassLogin={false}
         onExit={() => {
           window.history.pushState({}, "", "/");
           setCurrentPath("/");

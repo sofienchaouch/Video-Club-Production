@@ -58,7 +58,9 @@ function createAdminToken(): string {
 function isValidAdminToken(token: any): boolean {
   if (!token || typeof token !== "string") return false;
 
-  if (token === "bypassed-token") return true;
+  // NOTE: a hardcoded "bypassed-token" was accepted here. It shipped inside the
+  // client bundle, so any visitor could read it and drive every admin endpoint.
+  // Do not reintroduce a constant, client-visible token.
 
   // Backward compatibility with legacy token format
   if (token === `auth-${ADMIN_PASSWORD}`) return true;
@@ -342,20 +344,76 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-// Helper to read dynamic json files safely across local and Vercel environments
-async function readDynamicFile<T>(filename: string, defaultValue: T): Promise<T> {
-  const tmpPath = path.join(os.tmpdir(), filename);
-  const rootPath = path.join(process.cwd(), filename);
+// Durable persistence via Firestore.
+// Vercel's filesystem is ephemeral: os.tmpdir() is wiped on cold start, redeploy
+// and scale-out, so admin edits written there silently reverted to the repo
+// defaults. When the FIREBASE_* env vars are set, dynamic data lives in
+// Firestore instead and the filesystem is only used as a local-dev fallback.
+const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
+const FIREBASE_CLIENT_EMAIL = process.env.FIREBASE_CLIENT_EMAIL;
+const FIREBASE_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+const firestoreConfigured = Boolean(FIREBASE_PROJECT_ID && FIREBASE_CLIENT_EMAIL && FIREBASE_PRIVATE_KEY);
 
-  try {
-    if (await fileExists(tmpPath)) {
-      const data = await fs.readFile(tmpPath, "utf-8");
-      return JSON.parse(data);
-    }
-  } catch (err) {
-    // Continue to fallback
+const DYNAMIC_COLLECTION = "dynamic";
+const docIdFor = (filename: string) => filename.replace(/\.json$/, "");
+
+let firestorePromise: Promise<any> | null = null;
+
+async function getFirestoreDb(): Promise<any | null> {
+  if (!firestoreConfigured) return null;
+
+  if (!firestorePromise) {
+    firestorePromise = (async () => {
+      const { initializeApp, getApps, cert } = await import("firebase-admin/app");
+      const { getFirestore } = await import("firebase-admin/firestore");
+      const app = getApps().length
+        ? getApps()[0]
+        : initializeApp({
+            credential: cert({
+              projectId: FIREBASE_PROJECT_ID,
+              clientEmail: FIREBASE_CLIENT_EMAIL,
+              privateKey: FIREBASE_PRIVATE_KEY,
+            }),
+          });
+      return getFirestore(app);
+    })().catch((err) => {
+      console.error("Firestore init failed, falling back to filesystem:", err);
+      firestorePromise = null;
+      return null;
+    });
   }
 
+  return firestorePromise;
+}
+
+// Helper to read dynamic json files safely across local and Vercel environments
+async function readDynamicFile<T>(filename: string, defaultValue: T): Promise<T> {
+  const db = await getFirestoreDb();
+
+  if (db) {
+    try {
+      const snap = await db.collection(DYNAMIC_COLLECTION).doc(docIdFor(filename)).get();
+      const data = snap.exists ? snap.data() : null;
+      if (data && data.value !== undefined) {
+        return data.value as T;
+      }
+      // Nothing stored yet: fall through to the repo file, which acts as the seed.
+    } catch (err) {
+      console.error(`Error reading ${filename} from Firestore:`, err);
+    }
+  } else {
+    const tmpPath = path.join(os.tmpdir(), filename);
+    try {
+      if (await fileExists(tmpPath)) {
+        const data = await fs.readFile(tmpPath, "utf-8");
+        return JSON.parse(data);
+      }
+    } catch (err) {
+      // Continue to fallback
+    }
+  }
+
+  const rootPath = path.join(process.cwd(), filename);
   try {
     if (await fileExists(rootPath)) {
       const data = await fs.readFile(rootPath, "utf-8");
@@ -370,6 +428,21 @@ async function readDynamicFile<T>(filename: string, defaultValue: T): Promise<T>
 
 // Helper to write dynamic json files safely across local and Vercel environments
 async function writeDynamicFile(filename: string, content: any): Promise<void> {
+  const db = await getFirestoreDb();
+
+  if (db) {
+    try {
+      await db
+        .collection(DYNAMIC_COLLECTION)
+        .doc(docIdFor(filename))
+        .set({ value: content, updatedAt: new Date().toISOString() });
+      return;
+    } catch (err) {
+      console.error(`Error writing ${filename} to Firestore:`, err);
+      // Fall through to the filesystem so the write is not lost outright.
+    }
+  }
+
   const jsonStr = JSON.stringify(content, null, 2);
   const tmpPath = path.join(os.tmpdir(), filename);
 

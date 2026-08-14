@@ -2099,7 +2099,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                       <div className="flex-1">
-                        <ImageUploader
+                        <ImageUploader adminToken={token || ""}
                           label="Upload Logo File from Computer"
                           currentImageUrl={settingsBuffer?.agencyLogo || ""}
                           onUploadSuccess={(url) => {
@@ -2193,7 +2193,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                       <div className="flex-1">
-                        <ImageUploader
+                        <ImageUploader adminToken={token || ""}
                           label="Upload Presentation Video File (MP4, WebM)"
                           acceptType="video"
                           maxSizeMB={100}
@@ -2296,7 +2296,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                             placeholder={fallbackUrls[idx]}
                             className="w-full px-3 py-2 bg-slate-950 border border-slate-850 hover:border-zinc-800 focus:border-gold-500/40 rounded text-3xs outline-none text-white transition-all font-mono mb-2"
                           />
-                          <ImageUploader
+                          <ImageUploader adminToken={token || ""}
                             label="Or Upload Image File"
                             currentImageUrl={val}
                             onUploadSuccess={(url) => {
@@ -2391,7 +2391,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                             placeholder={space.defaultImg}
                             className="w-full px-3 py-2 bg-slate-950 border border-slate-850 hover:border-zinc-800 focus:border-gold-500/40 rounded text-3xs outline-none text-white transition-all font-mono"
                           />
-                          <ImageUploader
+                          <ImageUploader adminToken={token || ""}
                             label="Or Upload Studio Photo"
                             currentImageUrl={val}
                             onUploadSuccess={(url) => {
@@ -2481,7 +2481,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                                 placeholder={fallbackStill}
                                 className="w-full px-3 py-2 bg-slate-950 border border-slate-850 hover:border-zinc-800 focus:border-gold-500/40 rounded text-3xs outline-none text-white transition-all font-mono"
                               />
-                              <ImageUploader
+                              <ImageUploader adminToken={token || ""}
                                 label="Or Upload Project Thumbnail"
                                 currentImageUrl={val}
                                 onUploadSuccess={(url) => {
@@ -2570,7 +2570,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                               placeholder="Portrait image URL..."
                               className="w-full px-3 py-2 bg-slate-950 border border-slate-850 hover:border-zinc-800 focus:border-gold-500/40 rounded text-3xs outline-none text-white transition-all font-mono"
                             />
-                            <ImageUploader
+                            <ImageUploader adminToken={token || ""}
                               label="Or Upload Portrait File"
                               currentImageUrl={val}
                               onUploadSuccess={(url) => {
@@ -2643,7 +2643,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                     </div>
                   </div>
                   <div className="max-w-md">
-                    <ImageUploader
+                    <ImageUploader adminToken={token || ""}
                       label="Or Upload Partner Logo File"
                       currentImageUrl={newPartnerUrl}
                       onUploadSuccess={(url) => {
@@ -3922,7 +3922,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                       placeholder="YouTube ID (e.g. TuXP4MTPta4) or MP4 URL"
                       className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded text-xs text-white outline-none font-mono focus:border-gold-500/50 mb-2"
                     />
-                    <ImageUploader
+                    <ImageUploader adminToken={token || ""}
                       label="Or Upload Video File for this Project (MP4, WebM)"
                       acceptType="video"
                       maxSizeMB={100}
@@ -3940,7 +3940,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                       placeholder="https://domain.com/image.jpg"
                       className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded text-xs text-white outline-none font-mono focus:border-gold-500/50 mb-2"
                     />
-                    <ImageUploader
+                    <ImageUploader adminToken={token || ""}
                       label="Or Upload Project Thumbnail"
                       currentImageUrl={editingProject.visualStill || ""}
                       onUploadSuccess={(url) => setEditingProject({ ...editingProject, visualStill: url })}
@@ -4083,7 +4083,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                       placeholder="https://domain.com/portrait.jpg"
                       className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded text-xs text-white outline-none font-mono focus:border-gold-500/50 mb-2"
                     />
-                    <ImageUploader
+                    <ImageUploader adminToken={token || ""}
                       label="Or Upload Headshot Portrait"
                       currentImageUrl={editingTeamMember.image || ""}
                       onUploadSuccess={(url) => setEditingTeamMember({ ...editingTeamMember, image: url })}

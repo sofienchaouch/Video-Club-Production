@@ -7,6 +7,12 @@ interface ImageUploaderProps {
   label?: string;
   acceptType?: "image" | "video" | "any";
   maxSizeMB?: number;
+  /**
+   * Admin session token, passed down from AdminPanel. AdminPanel holds the token
+   * in state, so reading localStorage here instead can miss it entirely and make
+   * every upload fail with "Unauthorized. Invalid admin token."
+   */
+  adminToken?: string;
 }
 
 export default function ImageUploader({
@@ -14,14 +20,15 @@ export default function ImageUploader({
   currentImageUrl,
   label = "Upload Image",
   acceptType = "image",
-  maxSizeMB
+  maxSizeMB,
+  adminToken
 }: ImageUploaderProps) {
   const [dragActive, setDragActive] = useState(false);
   const [uploadState, setUploadState] = useState<"idle" | "uploading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const adminToken = localStorage.getItem("video-club-admin-token") || "";
+  const token = adminToken || localStorage.getItem("video-club-admin-token") || "";
 
   const handleFile = async (file: File) => {
     const isImage = file.type.startsWith("image/");
@@ -68,7 +75,7 @@ export default function ImageUploader({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            token: adminToken,
+            token,
             filename: file.name,
             base64Data,
           }),
