@@ -352,10 +352,71 @@ async function fileExists(filePath: string): Promise<boolean> {
 const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
 const FIREBASE_CLIENT_EMAIL = process.env.FIREBASE_CLIENT_EMAIL;
 const FIREBASE_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+// Projects created through AI Studio get a generated database id rather than
+// "(default)". Connecting to the wrong database fails every read and write, so
+// the id is configurable.
+const FIREBASE_DATABASE_ID = process.env.FIREBASE_DATABASE_ID || "(default)";
 const firestoreConfigured = Boolean(FIREBASE_PROJECT_ID && FIREBASE_CLIENT_EMAIL && FIREBASE_PRIVATE_KEY);
 
 const DYNAMIC_COLLECTION = "dynamic";
 const docIdFor = (filename: string) => filename.replace(/\.json$/, "");
+
+// Upstash Redis over its REST API. Preferred when configured: it needs only two
+// env vars, so it works even where minting a Firestore service account key is
+// blocked by project policy.
+const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL?.replace(/\/$/, "");
+const UPSTASH_REDIS_REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+const upstashConfigured = Boolean(UPSTASH_REDIS_REST_URL && UPSTASH_REDIS_REST_TOKEN);
+
+const upstashKeyFor = (filename: string) => `dynamic:${docIdFor(filename)}`;
+
+// Returns null for "not stored / unavailable" so callers fall through to the
+// next backend rather than treating a miss as empty content.
+async function upstashRead<T>(filename: string): Promise<T | null> {
+  if (!upstashConfigured) return null;
+
+  try {
+    const key = encodeURIComponent(upstashKeyFor(filename));
+    const res = await fetch(`${UPSTASH_REDIS_REST_URL}/get/${key}`, {
+      headers: { Authorization: `Bearer ${UPSTASH_REDIS_REST_TOKEN}` },
+    });
+
+    if (!res.ok) {
+      console.error(`Upstash read failed for ${filename}: HTTP ${res.status}`);
+      return null;
+    }
+
+    const body: any = await res.json();
+    if (body?.result === null || body?.result === undefined) return null;
+    return JSON.parse(body.result) as T;
+  } catch (err) {
+    console.error(`Error reading ${filename} from Upstash:`, err);
+    return null;
+  }
+}
+
+async function upstashWrite(filename: string, content: any): Promise<boolean> {
+  if (!upstashConfigured) return false;
+
+  try {
+    const key = encodeURIComponent(upstashKeyFor(filename));
+    const res = await fetch(`${UPSTASH_REDIS_REST_URL}/set/${key}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${UPSTASH_REDIS_REST_TOKEN}` },
+      body: JSON.stringify(content),
+    });
+
+    if (!res.ok) {
+      console.error(`Upstash write failed for ${filename}: HTTP ${res.status}`);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error(`Error writing ${filename} to Upstash:`, err);
+    return false;
+  }
+}
 
 let firestorePromise: Promise<any> | null = null;
 
@@ -375,7 +436,7 @@ async function getFirestoreDb(): Promise<any | null> {
               privateKey: FIREBASE_PRIVATE_KEY,
             }),
           });
-      return getFirestore(app);
+      return getFirestore(app, FIREBASE_DATABASE_ID);
     })().catch((err) => {
       console.error("Firestore init failed, falling back to filesystem:", err);
       firestorePromise = null;
@@ -388,6 +449,9 @@ async function getFirestoreDb(): Promise<any | null> {
 
 // Helper to read dynamic json files safely across local and Vercel environments
 async function readDynamicFile<T>(filename: string, defaultValue: T): Promise<T> {
+  const stored = await upstashRead<T>(filename);
+  if (stored !== null) return stored;
+
   const db = await getFirestoreDb();
 
   if (db) {
@@ -401,7 +465,9 @@ async function readDynamicFile<T>(filename: string, defaultValue: T): Promise<T>
     } catch (err) {
       console.error(`Error reading ${filename} from Firestore:`, err);
     }
-  } else {
+  } else if (!upstashConfigured) {
+    // No durable backend configured: fall back to the ephemeral temp copy, which
+    // is the pre-existing local-development behaviour.
     const tmpPath = path.join(os.tmpdir(), filename);
     try {
       if (await fileExists(tmpPath)) {
@@ -428,6 +494,8 @@ async function readDynamicFile<T>(filename: string, defaultValue: T): Promise<T>
 
 // Helper to write dynamic json files safely across local and Vercel environments
 async function writeDynamicFile(filename: string, content: any): Promise<void> {
+  if (await upstashWrite(filename, content)) return;
+
   const db = await getFirestoreDb();
 
   if (db) {
