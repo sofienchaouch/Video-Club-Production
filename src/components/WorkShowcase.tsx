@@ -37,6 +37,18 @@ export default function WorkShowcase({ onOpenShowreel }: WorkShowcaseProps) {
   // Merge original works metadata with custom projects & translations dynamically
   const customProjects = agencySettings?.customProjects || [];
   
+  // Extracts a bare 11-char YouTube video ID from any common URL shape
+  // (youtu.be, watch?v=, embed/, shorts/) or passes through an already-bare ID.
+  // Admin-entered values aren't guaranteed to be normalized at save time, so
+  // this also protects the theater-mode player from a raw pasted URL.
+  const extractYoutubeId = (raw?: string): string | undefined => {
+    if (!raw || typeof raw !== "string") return undefined;
+    const trimmed = raw.trim();
+    if (/^[\w-]{11}$/.test(trimmed)) return trimmed;
+    const match = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+    return match ? match[1] : undefined;
+  };
+
   // Helper function to dynamically derive the best video thumbnail cover
   const resolveProjectStill = (p: any) => {
     let raw = "/uploads/p8.jpg";
@@ -86,6 +98,7 @@ export default function WorkShowcase({ onOpenShowreel }: WorkShowcaseProps) {
         tags: customProject?.tags || translated?.tags || work.tags,
         visualStill: resolveProjectStill({ ...base, ...customProject }),
         videoUrl: resolveProjectVideo({ ...base, ...customProject }),
+        youtubeId: extractYoutubeId(base.youtubeId),
       };
     }),
     ...customProjects
@@ -93,6 +106,7 @@ export default function WorkShowcase({ onOpenShowreel }: WorkShowcaseProps) {
       .map((cp: any) => ({
         ...cp,
         visualStill: resolveProjectStill(cp),
+        youtubeId: extractYoutubeId(cp.youtubeId),
         tags: Array.isArray(cp.tags) ? cp.tags : (cp.tags ? String(cp.tags).split(",").map((s: string) => s.trim()) : ["Commercial", "4K"])
       }))
   ];
@@ -118,7 +132,6 @@ export default function WorkShowcase({ onOpenShowreel }: WorkShowcaseProps) {
   const [nativeCurrentTime, setNativeCurrentTime] = useState("0:00");
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const playerSectionRef = useRef<HTMLDivElement | null>(null);
 
   const filteredWorks = selectedCategory === "all"
     ? translatedWorks
@@ -192,12 +205,10 @@ export default function WorkShowcase({ onOpenShowreel }: WorkShowcaseProps) {
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
-  // Change active video and smooth scroll up to player if clicked from below
+  // Open the full-screen theater mode player/gallery for the clicked project
   const handleSelectWork = (id: string) => {
     setActiveWorkId(id);
-    if (playerSectionRef.current) {
-      playerSectionRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
+    setIsTheaterMode(true);
   };
 
   const handleShare = () => {
@@ -344,8 +355,7 @@ export default function WorkShowcase({ onOpenShowreel }: WorkShowcaseProps) {
                       {work.description}
                     </p>
 
-                    <div className="mt-4 pt-3 border-t border-zinc-900/80 flex items-center justify-between text-[10px] font-mono text-zinc-500">
-                      <span>{work.camera}</span>
+                    <div className="mt-4 pt-3 border-t border-zinc-900/80 flex items-center justify-end text-[10px] font-mono text-zinc-500">
                       <span className="text-zinc-400 font-medium">{work.duration}</span>
                     </div>
                   </div>
@@ -456,11 +466,6 @@ export default function WorkShowcase({ onOpenShowreel }: WorkShowcaseProps) {
               </div>
 
               <div className="flex gap-4 items-center shrink-0">
-                <div className="text-right">
-                  <span className="block font-mono text-[8px] text-zinc-500 uppercase leading-none mb-1">OPTICAL PACKAGE</span>
-                  <span className="text-zinc-300 text-xs font-mono font-bold uppercase">{activeWork.camera}</span>
-                </div>
-                <div className="h-6 w-[1px] bg-zinc-900"></div>
                 <div className="text-right">
                   <span className="block font-mono text-[8px] text-zinc-500 uppercase leading-none mb-1">DURATION</span>
                   <span className="text-gold-400 text-xs font-mono font-bold">{activeWork.duration}</span>

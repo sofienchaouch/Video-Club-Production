@@ -3918,7 +3918,17 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                     <input
                       type="text"
                       value={editingProject.youtubeId || editingProject.videoUrl || ""}
-                      onChange={(e) => setEditingProject({ ...editingProject, youtubeId: formatGoogleDriveLink(e.target.value, 'video'), videoUrl: formatGoogleDriveLink(e.target.value, 'video') })}
+                      onChange={(e) => {
+                        const raw = e.target.value.trim();
+                        const ytMatch = /^[\w-]{11}$/.test(raw)
+                          ? raw
+                          : raw.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/)?.[1];
+                        setEditingProject({
+                          ...editingProject,
+                          youtubeId: ytMatch || "",
+                          videoUrl: ytMatch ? "" : formatGoogleDriveLink(raw, 'video'),
+                        });
+                      }}
                       placeholder="YouTube ID (e.g. TuXP4MTPta4) or MP4 URL"
                       className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded text-xs text-white outline-none font-mono focus:border-gold-500/50 mb-2"
                     />
