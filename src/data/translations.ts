@@ -25,7 +25,7 @@ export const TRANSLATIONS = {
     nav_production_house: "PRODUCTION HOUSE",
 
     // Hero Section
-    hero_boutique_agency: "BOUTIQUE CINEMATIC AGENCY",
+    hero_boutique_agency: "AUDIOVISUAL AGENCY",
     hero_crafting: "CRAFTING",
     hero_cinematic_stories: "CINEMATIC STORIES",
     hero_concept: "We are Video Club Production. An elite production house designing high-end commercials, award-winning music videos, and poetic branded films that linger long after the screen goes dark.",

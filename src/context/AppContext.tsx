@@ -137,7 +137,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // Dynamic localized SEO Metadata values
     let pageTitle = "Video Club Production | Boutique Cinematic Video Agency Tunis";
-    let pageDesc = "Video Club Production is an elite boutique cinematic production agency based in Tunis (Ennasr 2). We design high-end commercials, award-winning music videos, and poetic branded films.";
+    let pageDesc = "Video Club Production is a Tunisian audiovisual agency based in Tunis (Ennasr 2). We design high-end commercials, award-winning music videos, and poetic branded films.";
     let localeVal = "en_US";
 
     if (language === "ar") {

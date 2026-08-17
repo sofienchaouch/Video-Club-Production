@@ -3,5 +3,5 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://videoclubproduction.com/sitemap.xml
+Sitemap: https://www.videoclubproduction.com/sitemap.xml
 
