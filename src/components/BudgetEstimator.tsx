@@ -22,7 +22,7 @@ export const DEFAULT_PACKS = [
       ar: "جلسة الاستوديو الأساسية"
     },
     price: 1000,
-    icon: Film,
+    icon: "Film",
     badge: {
       en: "Studio & Gear",
       fr: "Studio & Matériel",
@@ -58,7 +58,7 @@ export const DEFAULT_PACKS = [
       ar: "باقة صناع المحتوى والريلز"
     },
     price: 1450,
-    icon: Briefcase,
+    icon: "Briefcase",
     badge: {
       en: "Reels & Shorts",
       fr: "Reels & Shorts",
@@ -98,7 +98,7 @@ export const DEFAULT_PACKS = [
       ar: "باقة البودكاست النخبوية"
     },
     price: 1600,
-    icon: Mic,
+    icon: "Mic",
     badge: {
       en: "Multi-Cam Show",
       fr: "Émission Multi-Cam",
@@ -139,7 +139,7 @@ export const DEFAULT_PACKS = [
       ar: "باقة الإنتاج السينمائي الإبداعية"
     },
     price: 3050,
-    icon: Tv,
+    icon: "Tv",
     badge: {
       en: "Complete Creative Day",
       fr: "Création Élite",
@@ -1046,7 +1046,18 @@ export default function BudgetEstimator({ onEstimateSaved }: BudgetEstimatorProp
 
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
                 {packs.map((pack: any, i: number) => {
-                  const IconComponent = typeof pack.icon === "string" ? (ICON_MAP[pack.icon as keyof typeof ICON_MAP] || Film) : (pack.icon || Film);
+                  // pack.icon is normally a string key ("Film", "Briefcase", ...). Older saved
+                  // estimator config could contain a JSON round-tripped React component instead
+                  // (e.g. { displayName: "Film" }, missing its $$typeof) which is not a valid
+                  // element type, so every shape here is resolved defensively.
+                  const IconComponent =
+                    typeof pack.icon === "function"
+                      ? pack.icon
+                      : typeof pack.icon === "string"
+                      ? ICON_MAP[pack.icon as keyof typeof ICON_MAP] || Film
+                      : pack.icon && typeof pack.icon === "object" && typeof pack.icon.displayName === "string"
+                      ? ICON_MAP[pack.icon.displayName as keyof typeof ICON_MAP] || Film
+                      : Film;
                   const isSelected = activePack === pack.id;
                   const packName = pack.name[language as keyof typeof pack.name] || pack.name.en;
                   const packBadge = pack.badge[language as keyof typeof pack.badge] || pack.badge.en;

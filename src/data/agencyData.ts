@@ -137,49 +137,6 @@ export const PORTFOLIO_WORKS: WorkItem[] = [
     tags: ["Interview", "Dialogue", "Nour Boumalela", "Show", "Multi-Cam"]
   },
   {
-    id: "elyssar-haute-couture",
-    title: "Elyssar Haute Couture Campaign",
-    category: "photography",
-    client: "Elyssar",
-    director: "Sofien Chaouch",
-    dp: "Sonia Ben Ammar",
-    year: "2026",
-    duration: "Photography Series",
-    camera: "Hasselblad H6D-100c & Profoto Studio Lighting",
-    visualStill: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80",
-    description: "An editorial photography campaign capturing Mediterranean royal elegance, flowing silk gowns, and hand-embroidered haute couture dresses for Maison Elyssar.",
-    challenge: "Rendering intricate gold thread embroidery and natural silk shimmer under high-contrast studio lights.",
-    solution: "Utilizing medium format Hasselblad sensors paired with diffused Profoto softboxes and silver reflectors for skin tones.",
-    credits: [
-      { role: "Lead Photographer", name: "Sofien Chaouch" },
-      { role: "Artistic Director", name: "Salma Ben Slimane" },
-      { role: "Retoucher", name: "Master Studio Paris" }
-    ],
-    tags: ["Photography", "Haute Couture", "Elyssar", "Editorial", "Fashion"]
-  },
-  {
-    id: "cartagina-heritage-film",
-    title: "Cartagina Ancient Echoes",
-    category: "branded",
-    client: "Cartagina",
-    director: "Sofien Chaouch",
-    dp: "Youssef Guezguez",
-    year: "2026",
-    duration: "2:15",
-    camera: "ARRI Alexa Mini LF & Leica Summilux Primes",
-    visualStill: "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=1200&q=80",
-    youtubeId: "nl0CngwP5Fw",
-    description: "A poetic luxury brand film captured along Carthaginian coastal ruins, fusing ancient Mediterranean heritage with modern artisanal production.",
-    challenge: "Filming golden hour natural sunlight over ancient stonework while maintaining smooth camera movements across uneven seaside terrain.",
-    solution: "Deploying Steadicam operators with Leica Summilux warm lenses to capture natural sun flares and rich sea textures.",
-    credits: [
-      { role: "Executive Director", name: "Sofien Chaouch" },
-      { role: "Steadicam Operator", name: "Kamel Mansouri" },
-      { role: "Colorist", name: "DaVinci Master Group" }
-    ],
-    tags: ["Branded Film", "Cartagina", "Heritage", "Mediterranean", "Cinematic"]
-  },
-  {
     id: "video-club-showcase-svZNfyC6C78",
     title: "Video Club Cinema Showcase",
     category: "commercial",
@@ -200,27 +157,6 @@ export const PORTFOLIO_WORKS: WorkItem[] = [
       { role: "Lead Editor", name: "Sofiene Ben Romdhane" }
     ],
     tags: ["Commercial", "Cinematic", "Video Club", "Showcase", "4K"]
-  },
-  {
-    id: "auguste-lookbook",
-    title: "Auguste Studio Lookbook 2026",
-    category: "photography",
-    client: "Auguste",
-    director: "Sofien Chaouch",
-    dp: "Firas Belhassine",
-    year: "2026",
-    duration: "Photography Series",
-    camera: "Phase One XF 150MP & Broncolor Lighting",
-    visualStill: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80",
-    description: "High-fashion lookbook studio photography showcasing sharp geometric tailoring, metallic accents, and minimal luxury silhouettes for Auguste Maison.",
-    challenge: "Preserving fine fabric weave textures and micro-details across dark charcoal and metallic garments.",
-    solution: "Setting up a 150-megapixel Phase One back with targeted optical grid spotlights and hard rim lights.",
-    credits: [
-      { role: "Lead Photographer", name: "Sofien Chaouch" },
-      { role: "Stylist", name: "Fatma Ben Ayed" },
-      { role: "Gaffer", name: "Hassen Touati" }
-    ],
-    tags: ["Photography", "Lookbook", "Auguste", "Studio", "High-Fashion"]
   }
 ];
 

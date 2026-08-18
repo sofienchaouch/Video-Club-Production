@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "motion/react";
 import ImageUploader from "./ImageUploader";
 import Logo from "./Logo";
 import { formatGoogleDriveLink } from "../utils/googleDrive";
+import { extractYoutubeId } from "../utils/youtube";
 import { 
   Lock, 
   Save, 
@@ -148,6 +149,17 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
   // Projects editing state
   const [editingProject, setEditingProject] = useState<any | null>(null);
   const [isEditingProjectModal, setIsEditingProjectModal] = useState(false);
+  // Native window.confirm() is unreliable inside embedded/preview browser contexts
+  // (silently auto-dismissed with no dialog shown), so project deletion uses this
+  // in-UI two-click confirm instead: first click arms it, second click within the
+  // window actually deletes.
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  // Generic confirmation modal, used by every other "are you sure?" action in
+  // this panel for the same reason as confirmDeleteId above: window.confirm()
+  // is unreliable here, so this in-app modal replaces it everywhere.
+  const [pendingConfirm, setPendingConfirm] = useState<{ message: string; onConfirm: () => void } | null>(null);
+  const askConfirm = (message: string, onConfirm: () => void) => setPendingConfirm({ message, onConfirm });
 
   // Team member editing state
   const [editingTeamMember, setEditingTeamMember] = useState<any | null>(null);
@@ -274,22 +286,23 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
   };
 
   const handleDeleteLead = async (leadId: string) => {
-    if (!window.confirm("Are you sure you want to delete this lead from the vault?")) return;
     if (!token) return;
-    try {
-      const response = await fetch("/api/admin/leads/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, leadId })
-      });
-      if (response.ok) {
-        setLeads(prev => prev.filter(lead => lead.id !== leadId));
-      } else {
-        alert("Failed to delete lead.");
+    askConfirm("Are you sure you want to delete this lead from the vault?", async () => {
+      try {
+        const response = await fetch("/api/admin/leads/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, leadId })
+        });
+        if (response.ok) {
+          setLeads(prev => prev.filter(lead => lead.id !== leadId));
+        } else {
+          alert("Failed to delete lead.");
+        }
+      } catch (err) {
+        console.error("Error deleting lead:", err);
       }
-    } catch (err) {
-      console.error("Error deleting lead:", err);
-    }
+    });
   };
 
   // Cost Estimator state
@@ -592,16 +605,17 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
   };
 
   const handleDeleteEstimatorItem = (categoryId: string, itemId: string) => {
-    if (!window.confirm("Are you sure you want to delete this cost item?")) return;
-    setEstimatorBuffer((prev: any) => {
-      const categories = prev.categories.map((cat: any) => {
-        if (cat.id !== categoryId) return cat;
-        return {
-          ...cat,
-          items: cat.items.filter((item: any) => item.id !== itemId)
-        };
+    askConfirm("Are you sure you want to delete this cost item?", () => {
+      setEstimatorBuffer((prev: any) => {
+        const categories = prev.categories.map((cat: any) => {
+          if (cat.id !== categoryId) return cat;
+          return {
+            ...cat,
+            items: cat.items.filter((item: any) => item.id !== itemId)
+          };
+        });
+        return { ...prev, categories };
       });
-      return { ...prev, categories };
     });
   };
 
@@ -713,30 +727,31 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
   };
 
   const handleDeletePack = (packId: string) => {
-    if (!window.confirm("Are you sure you want to delete this package?")) return;
-    setEstimatorBuffer((prev: any) => ({
-      ...prev,
-      packs: prev.packs.filter((p: any) => p.id !== packId)
-    }));
-    if (selectedPackId === packId) {
-      setSelectedPackId(null);
-    }
+    askConfirm("Are you sure you want to delete this package?", () => {
+      setEstimatorBuffer((prev: any) => ({
+        ...prev,
+        packs: prev.packs.filter((p: any) => p.id !== packId)
+      }));
+      if (selectedPackId === packId) {
+        setSelectedPackId(null);
+      }
+    });
   };
 
   // Reset local buffer back to currently saved customized overrides
   const handleResetBuffer = () => {
-    if (window.confirm("Discard all unsaved edits in your working buffer?")) {
+    askConfirm("Discard all unsaved edits in your working buffer?", () => {
       const reset: any = { en: {}, fr: {}, ar: {} };
       (["en", "fr", "ar"] as const).forEach((lang) => {
         const baseLangKeys = TRANSLATIONS[lang] as any;
         const customLangKeys = customTranslations[lang] || {};
-        
+
         Object.keys(baseLangKeys).forEach((key) => {
           reset[lang][key] = customLangKeys[key] !== undefined ? customLangKeys[key] : "";
         });
       });
       setEditBuffer(reset);
-    }
+    });
   };
 
   // Auth Screen Layout
@@ -1704,7 +1719,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                                 Visual Icon
                               </label>
                               <select
-                                value={currentPack.icon}
+                                value={typeof currentPack.icon === "string" ? currentPack.icon : currentPack.icon?.displayName || "Film"}
                                 onChange={(e) => handlePackFieldChange(currentPack.id, "icon", e.target.value)}
                                 className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 focus:border-gold-500/40 rounded-lg text-xs text-white outline-none"
                               >
@@ -2428,18 +2443,27 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {(() => {
                     const customProjects = settingsBuffer?.customProjects || [];
+                    const deletedProjectIds: string[] = settingsBuffer?.deletedProjectIds || [];
                     const allProjects = [
-                      ...PORTFOLIO_WORKS.map((work) => {
+                      ...PORTFOLIO_WORKS.filter((work) => !deletedProjectIds.includes(work.id)).map((work) => {
                         const cp = customProjects.find((p: any) => p.id === work.id);
                         return cp ? { ...work, ...cp } : work;
                       }),
-                      ...customProjects.filter((cp: any) => !PORTFOLIO_WORKS.some((w) => w.id === cp.id))
+                      ...customProjects.filter((cp: any) => !PORTFOLIO_WORKS.some((w) => w.id === cp.id) && !deletedProjectIds.includes(cp.id))
                     ];
 
                     return allProjects.map((work: any) => {
-                      const fallbackStill = work.visualStill || (work.youtubeId ? `https://img.youtube.com/vi/${work.youtubeId}/hqdefault.jpg` : "/uploads/p8.jpg");
+                      // Stored image URLs (Drive "download" links, raw pasted YouTube URLs, ...)
+                      // are not guaranteed to be in a browser-embeddable format, so both the
+                      // primary value and its fallback are normalized the same way the public
+                      // site does, instead of being used as raw stored strings.
+                      const ytThumbId = work.youtubeId ? extractYoutubeId(work.youtubeId) : undefined;
+                      const fallbackStill = formatGoogleDriveLink(
+                        work.visualStill || (ytThumbId ? `https://img.youtube.com/vi/${ytThumbId}/hqdefault.jpg` : "/uploads/p8.jpg"),
+                        "image"
+                      );
                       const val = settingsBuffer?.portfolioImages?.[work.id] || "";
-                      const currentStill = val || fallbackStill;
+                      const currentStill = val ? formatGoogleDriveLink(val, "image") : fallbackStill;
 
                       return (
                         <div key={work.id} className="p-4 bg-slate-950/40 border border-zinc-900 rounded-xl flex gap-4 items-center">
@@ -2742,12 +2766,12 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                       <button
                         type="button"
                         onClick={() => {
-                          if (window.confirm("Are you sure you want to clear all custom partner logos and revert to the default elite partners?")) {
+                          askConfirm("Are you sure you want to clear all custom partner logos and revert to the default elite partners?", () => {
                             setSettingsBuffer((prev: any) => ({
                               ...prev,
                               partnerLogos: []
                             }));
-                          }
+                          });
                         }}
                         className="text-4xs font-mono font-bold text-red-400 hover:text-red-300 transition-colors uppercase cursor-pointer"
                       >
@@ -2965,18 +2989,21 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
             {/* List of Projects Grid */}
             {(() => {
               const customProjects = settingsBuffer?.customProjects || [];
+              const deletedProjectIds: string[] = settingsBuffer?.deletedProjectIds || [];
               const allProjects = [
-                ...PORTFOLIO_WORKS.map((work) => {
+                ...PORTFOLIO_WORKS.filter((work) => !deletedProjectIds.includes(work.id)).map((work) => {
                   const cp = customProjects.find((p: any) => p.id === work.id);
                   return cp ? { ...work, ...cp } : work;
                 }),
-                ...customProjects.filter((cp: any) => !PORTFOLIO_WORKS.some((w) => w.id === cp.id))
+                ...customProjects.filter((cp: any) => !PORTFOLIO_WORKS.some((w) => w.id === cp.id) && !deletedProjectIds.includes(cp.id))
               ];
 
               return (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {allProjects.map((project: any) => {
-                    const still = settingsBuffer?.portfolioImages?.[project.id] || project.visualStill || "/uploads/p8.jpg";
+                    const ytThumbId = project.youtubeId ? extractYoutubeId(project.youtubeId) : undefined;
+                    const rawStill = settingsBuffer?.portfolioImages?.[project.id] || project.visualStill || (ytThumbId ? `https://img.youtube.com/vi/${ytThumbId}/hqdefault.jpg` : "/uploads/p8.jpg");
+                    const still = formatGoogleDriveLink(rawStill, "image");
                     const isCustom = customProjects.some((cp: any) => cp.id === project.id);
 
                     return (
@@ -3027,23 +3054,35 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                             Edit Project
                           </button>
 
-                          {isCustom && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (window.confirm(`Delete project "${project.title}"?`)) {
-                                  setSettingsBuffer((prev: any) => ({
-                                    ...prev,
-                                    customProjects: (prev.customProjects || []).filter((cp: any) => cp.id !== project.id)
-                                  }));
-                                }
-                              }}
-                              className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-zinc-900 rounded transition-colors cursor-pointer"
-                              title="Delete Project"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirmDeleteId === project.id) {
+                                setSettingsBuffer((prev: any) => ({
+                                  ...prev,
+                                  customProjects: (prev.customProjects || []).filter((cp: any) => cp.id !== project.id),
+                                  deletedProjectIds: Array.from(new Set([...(prev.deletedProjectIds || []), project.id]))
+                                }));
+                                setConfirmDeleteId(null);
+                              } else {
+                                setConfirmDeleteId(project.id);
+                                setTimeout(() => {
+                                  setConfirmDeleteId((current) => (current === project.id ? null : current));
+                                }, 3000);
+                              }
+                            }}
+                            className={`p-1.5 rounded transition-colors cursor-pointer flex items-center gap-1.5 ${
+                              confirmDeleteId === project.id
+                                ? "bg-red-500/20 text-red-400 px-2.5"
+                                : "text-zinc-500 hover:text-red-400 hover:bg-zinc-900"
+                            }`}
+                            title={confirmDeleteId === project.id ? "Click again to confirm deletion" : "Delete Project"}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            {confirmDeleteId === project.id && (
+                              <span className="text-3xs font-bold uppercase whitespace-nowrap">Confirm?</span>
+                            )}
+                          </button>
                         </div>
                       </div>
                     );
@@ -3177,12 +3216,12 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                               <button
                                 type="button"
                                 onClick={() => {
-                                  if (window.confirm(`Delete team member "${member.name}"?`)) {
+                                  askConfirm(`Delete team member "${member.name}"?`, () => {
                                     setSettingsBuffer((prev: any) => ({
                                       ...prev,
                                       customTeam: (prev.customTeam || []).filter((ct: any) => ct.id !== member.id)
                                     }));
-                                  }
+                                  });
                                 }}
                                 className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-zinc-900 rounded transition-colors cursor-pointer"
                                 title="Delete Member"
@@ -3298,12 +3337,12 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                           <button
                             type="button"
                             onClick={() => {
-                              if (window.confirm("Delete this FAQ item?")) {
+                              askConfirm("Delete this FAQ item?", () => {
                                 setSettingsBuffer((prev: any) => ({
                                   ...prev,
                                   customFaqs: (prev.customFaqs && prev.customFaqs.length > 0 ? prev.customFaqs : FAQ_DATA).filter((item: any) => item.id !== faq.id)
                                 }));
-                              }
+                              });
                             }}
                             className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-zinc-900 rounded transition-colors cursor-pointer"
                             title="Delete FAQ"
@@ -3385,32 +3424,33 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                       <div className="flex items-center justify-between pt-4 border-t border-slate-850">
                         <span className="text-3xs text-zinc-500 font-mono uppercase">Need to change accounts?</span>
                         <button
-                          onClick={async () => {
-                            if (!window.confirm("Are you sure you want to disconnect your Google integration? This will halt real-time booking calendar syncing and Gmail notification dispatches.")) return;
-                            try {
-                              await logoutGoogle();
-                              const updatedSettings = {
-                                ...settingsBuffer,
-                                googleConnection: {
-                                  accessToken: "",
-                                  adminEmail: "",
-                                  connectedAt: ""
+                          onClick={() => {
+                            askConfirm("Are you sure you want to disconnect your Google integration? This will halt real-time booking calendar syncing and Gmail notification dispatches.", async () => {
+                              try {
+                                await logoutGoogle();
+                                const updatedSettings = {
+                                  ...settingsBuffer,
+                                  googleConnection: {
+                                    accessToken: "",
+                                    adminEmail: "",
+                                    connectedAt: ""
+                                  }
+                                };
+                                setSettingsBuffer(updatedSettings);
+
+                                // Save straight to server
+                                const response = await fetch("/api/agency-settings", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ token, settings: updatedSettings })
+                                });
+                                if (response.ok) {
+                                  await reloadAgencySettings();
                                 }
-                              };
-                              setSettingsBuffer(updatedSettings);
-                              
-                              // Save straight to server
-                              const response = await fetch("/api/agency-settings", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ token, settings: updatedSettings })
-                              });
-                              if (response.ok) {
-                                await reloadAgencySettings();
+                              } catch (err) {
+                                console.error("Failed to disconnect:", err);
                               }
-                            } catch (err) {
-                              console.error("Failed to disconnect:", err);
-                            }
+                            });
                           }}
                           className="px-4 py-2 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-500/20 hover:border-rose-500/40 text-rose-400 text-2xs font-bold uppercase rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
                         >
@@ -3802,6 +3842,47 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
           </main>
         )}
 
+        {/* Generic Confirmation Modal (replaces window.confirm across this panel) */}
+        <AnimatePresence>
+          {pendingConfirm && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-sm w-full space-y-5 shadow-2xl"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                  </div>
+                  <p className="text-sm text-zinc-200 leading-relaxed pt-1">{pendingConfirm.message}</p>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPendingConfirm(null)}
+                    className="px-4 py-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 text-3xs font-bold uppercase rounded-lg transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const action = pendingConfirm.onConfirm;
+                      setPendingConfirm(null);
+                      action();
+                    }}
+                    className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 text-3xs font-bold uppercase rounded-lg transition-all cursor-pointer"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
         {/* Project Edit Modal */}
         <AnimatePresence>
           {isEditingProjectModal && editingProject && (
@@ -3920,9 +4001,7 @@ export default function AdminPanel({ onExit, bypassLogin = false }: { onExit: ()
                       value={editingProject.youtubeId || editingProject.videoUrl || ""}
                       onChange={(e) => {
                         const raw = e.target.value.trim();
-                        const ytMatch = /^[\w-]{11}$/.test(raw)
-                          ? raw
-                          : raw.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/)?.[1];
+                        const ytMatch = extractYoutubeId(raw);
                         setEditingProject({
                           ...editingProject,
                           youtubeId: ytMatch || "",

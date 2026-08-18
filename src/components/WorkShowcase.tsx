@@ -26,6 +26,7 @@ import {
 import { useApp } from "../context/AppContext";
 import { motion, AnimatePresence } from "motion/react";
 import { formatGoogleDriveLink } from "../utils/googleDrive";
+import { extractYoutubeId } from "../utils/youtube";
 
 interface WorkShowcaseProps {
   onOpenShowreel: () => void;
@@ -37,18 +38,6 @@ export default function WorkShowcase({ onOpenShowreel }: WorkShowcaseProps) {
   // Merge original works metadata with custom projects & translations dynamically
   const customProjects = agencySettings?.customProjects || [];
   
-  // Extracts a bare 11-char YouTube video ID from any common URL shape
-  // (youtu.be, watch?v=, embed/, shorts/) or passes through an already-bare ID.
-  // Admin-entered values aren't guaranteed to be normalized at save time, so
-  // this also protects the theater-mode player from a raw pasted URL.
-  const extractYoutubeId = (raw?: string): string | undefined => {
-    if (!raw || typeof raw !== "string") return undefined;
-    const trimmed = raw.trim();
-    if (/^[\w-]{11}$/.test(trimmed)) return trimmed;
-    const match = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
-    return match ? match[1] : undefined;
-  };
-
   // Helper function to dynamically derive the best video thumbnail cover
   const resolveProjectStill = (p: any) => {
     let raw = "/uploads/p8.jpg";
@@ -62,12 +51,7 @@ export default function WorkShowcase({ onOpenShowreel }: WorkShowcaseProps) {
     }
     // 3. Extract YouTube ID if present and generate high resolution thumbnail
     else {
-      let yId = p.youtubeId;
-      const urlToTest = p.youtubeUrl || p.videoUrl || p.url || "";
-      if (!yId && typeof urlToTest === "string") {
-        const match = urlToTest.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
-        if (match) yId = match[1];
-      }
+      const yId = extractYoutubeId(p.youtubeId) || extractYoutubeId(p.youtubeUrl || p.videoUrl || p.url);
       if (yId) {
         raw = `https://img.youtube.com/vi/${yId}/maxresdefault.jpg`;
       }
@@ -83,8 +67,10 @@ export default function WorkShowcase({ onOpenShowreel }: WorkShowcaseProps) {
     return formatGoogleDriveLink(raw, 'video');
   };
 
+  const deletedProjectIds: string[] = agencySettings?.deletedProjectIds || [];
+
   const translatedWorks = [
-    ...PORTFOLIO_WORKS.map((work) => {
+    ...PORTFOLIO_WORKS.filter((work) => !deletedProjectIds.includes(work.id)).map((work) => {
       const customProject = customProjects.find((cp: any) => cp.id === work.id);
       const translated = data.works.find((w) => w.id === work.id);
       const base = customProject ? { ...work, ...customProject } : work;
@@ -102,7 +88,7 @@ export default function WorkShowcase({ onOpenShowreel }: WorkShowcaseProps) {
       };
     }),
     ...customProjects
-      .filter((cp: any) => !PORTFOLIO_WORKS.some((w) => w.id === cp.id))
+      .filter((cp: any) => !PORTFOLIO_WORKS.some((w) => w.id === cp.id) && !deletedProjectIds.includes(cp.id))
       .map((cp: any) => ({
         ...cp,
         visualStill: resolveProjectStill(cp),
