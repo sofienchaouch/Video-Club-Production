@@ -141,12 +141,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let localeVal = "en_US";
 
     if (language === "ar") {
-      pageTitle = "Video Club Production | وكالة إنتاج سينمائي متميزة في تونس";
-      pageDesc = "Video Club Production هي شركة إنتاج سينمائي وتلفزيوني متميزة في النصر 2 تونس، متخصصة في الإعلانات التجارية، الفيديو كليب، والأفلام الترويجية الراقية.";
+      pageTitle = "Video Club Production | استوديو بودكاست - وكالة سمعية بصرية تونسية";
+      pageDesc = "Video Club Production هو استوديو بودكاست ووكالة سمعية بصرية تونسية في النصر 2، تونس. ننتج إعلانات تجارية راقية، وفيديوهات موسيقية حائزة على جوائز، وأفلام العلامات التجارية.";
       localeVal = "ar_TN";
     } else if (language === "fr") {
-      pageTitle = "Video Club Production | Agence de Production Vidéo Cinématique à Tunis";
-      pageDesc = "Video Club Production est une agence de production vidéo d'élite basée à Ennasr 2, Tunis, spécialisée dans les publicités de marque, les clips musicaux et les films cinématiques.";
+      pageTitle = "Video Club Production | Studio Podcast - Agence Audiovisuelle Tunisienne";
+      pageDesc = "Video Club Production est un studio podcast et une agence audiovisuelle tunisienne basée à Ennasr 2, Tunis. Nous réalisons des publicités haut de gamme, des clips musicaux primés et des films de marque.";
       localeVal = "fr_FR";
     }
 

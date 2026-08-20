@@ -130,7 +130,7 @@ export const TRANSLATIONS = {
     toast_success: "Success! Custom estimate of {amount} for {itemsCount} production services saved.",
 
     // Footer
-    footer_tagline: "An elite boutique cinematic agency specializing in high-end commercials, award-winning music videos, and poetic branded films that linger long after the screen goes dark.",
+    footer_tagline: "A podcast studio and Tunisian audiovisual agency specializing in high-end commercials, award-winning music videos, and poetic branded films that linger long after the screen goes dark.",
     quick_links: "Quick Links",
     all_rights: "All rights reserved"
   },
@@ -148,7 +148,7 @@ export const TRANSLATIONS = {
     nav_production_house: "MAISON DE PRODUCTION",
 
     // Hero Section
-    hero_boutique_agency: "AGENCE CINÉMATOGRAPHIQUE BOUTIQUE",
+    hero_boutique_agency: "AGENCE AUDIOVISUELLE",
     hero_crafting: "CRÉATION DE",
     hero_cinematic_stories: "RÉCITS CINÉMATOGRAPHIQUES",
     hero_concept: "Nous sommes Video Club Production. Une maison de production d'élite qui conçoit des publicités haut de gamme, des clips vidéo primés et des films de marque poétiques qui perdurent bien après que l'écran s'éteint.",
@@ -253,7 +253,7 @@ export const TRANSLATIONS = {
     toast_success: "Succès ! Estimation sur mesure de {amount} pour {itemsCount} services de production enregistrée.",
 
     // Footer
-    footer_tagline: "Une agence cinématographique boutique d'élite, spécialisée dans les publicités haut de gamme, les clips vidéo primés et les films de marque poétiques qui durent longtemps après que l'écran s'éteigne.",
+    footer_tagline: "Un studio podcast et une agence audiovisuelle tunisienne, spécialisés dans les publicités haut de gamme, les clips vidéo primés et les films de marque poétiques qui durent longtemps après que l'écran s'éteigne.",
     quick_links: "Liens rapides",
     all_rights: "Tous droits réservés"
   },
@@ -271,7 +271,7 @@ export const TRANSLATIONS = {
     nav_production_house: "دار إنتاج سينمائي",
 
     // Hero Section
-    hero_boutique_agency: "وكالة إنتاج سينمائي راقية",
+    hero_boutique_agency: "وكالة سمعية بصرية",
     hero_crafting: "صناعة",
     hero_cinematic_stories: "قصص سينمائية مذهلة",
     hero_concept: "نحن فيديو كلوب بروداكشن. بيت إنتاج سينمائي نخبي نصمم إعلانات تجارية فاخرة، وفيديوهات موسيقية حائزة على جوائز، وأفلام هوية بصرية شاعرية تترك أثراً طويلاً في الذاكرة بعد انطفاء الشاشة.",
@@ -376,7 +376,7 @@ export const TRANSLATIONS = {
     toast_success: "نجاح! تم حفظ ميزانيتك المخصصة بقيمة {amount} لعدد {itemsCount} من خدمات الإنتاج.",
 
     // Footer
-    footer_tagline: "وكالة إنتاج سينمائي راقية ونخبوية متخصصة في تصميم الإعلانات الفاخرة، الفيديوهات الموسيقية الحائزة على جوائز، وأفلام الهوية البصرية الشاعرية التي تترك أثراً طويلاً بعد انطفاء الشاشة.",
+    footer_tagline: "استوديو بودكاست ووكالة سمعية بصرية تونسية متخصصة في تصميم الإعلانات الفاخرة، الفيديوهات الموسيقية الحائزة على جوائز، وأفلام الهوية البصرية الشاعرية التي تترك أثراً طويلاً بعد انطفاء الشاشة.",
     quick_links: "روابط سريعة",
     all_rights: "جميع الحقوق محفوظة"
   }

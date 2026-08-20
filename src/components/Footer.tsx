@@ -130,7 +130,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                 VIDEO CLUB PRODUCTION
               </h4>
               <p className="text-zinc-500 text-[11px] leading-relaxed font-light">
-                This boutique cinematic portal is powered by advanced visual engineering. Tunis &copy; 2026.
+                This podcast studio and audiovisual portal is powered by advanced visual engineering. Tunis &copy; 2026.
               </p>
             </div>
           </div>
