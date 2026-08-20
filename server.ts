@@ -262,7 +262,7 @@ app.post(["/api/admin/upload-image", "/admin/upload-image"], async (req, res) =>
   }
 });
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Lazy-initialized Gemini client
 let aiClient: GoogleGenAI | null = null;
