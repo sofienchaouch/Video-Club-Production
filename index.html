@@ -54,8 +54,15 @@
     <meta name="twitter:image" content="https://www.videoclubproduction.com/uploads/logo.png" />
 
     <!-- Icons & Favicons -->
-    <link rel="icon" type="image/svg+xml" href="/logo-white.svg" />
-    <link rel="apple-touch-icon" href="/logo-white.svg" />
+    <!--
+      favicon.svg is a square, dark-plated version of the logo. The plain
+      logo-white.svg is unusable as an icon: it is a white mark on a
+      transparent background (invisible on a light browser tab and on
+      Google's white result row) and its 410x350 viewBox is not the 1:1
+      ratio Google requires to show a favicon in search results.
+    -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
 
     <!-- Schema.org Comprehensive Structured Data (JSON-LD) -->
     <script type="application/ld+json">

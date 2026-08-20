@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    Square favicon built from the Video Club Production mark.
+    A solid dark plate is required: the brand logo is white, so on a light
+    browser tab or on Google's white result row a transparent version is
+    effectively invisible. The "PRODUCTION" wordmark from the full logo is
+    dropped here because its 21px letter-spaced type is unreadable once the
+    icon is scaled down to 16-32px.
+  -->
+  <rect width="512" height="512" rx="104" fill="#0a0a0b" />
+
+  <g transform="translate(48, 111)">
+    <g transform="translate(205, 172.5) skewX(-11) translate(-205, -172.5)">
+      <!-- Outer folder shape -->
+      <path d="M 45,15 h 105 c 15,0 25,10 25,25 v 5 c 0,15 10,25 25,25 h 165 c 15,0 25,10 25,25 v 155 c 0,15 -10,25 -25,25 H 45 c -15,0 -25,-10 -25,-25 V 40 c 0,-15 10,-25 25,-25 z" fill="#ffffff" />
+
+      <!-- Inner slanted screen -->
+      <rect x="50" y="95" width="310" height="155" rx="14" fill="#0a0a0b" />
+
+      <!-- Stacked wordmark -->
+      <text x="205" y="162" text-anchor="middle" font-family="system-ui, -apple-system, 'Inter', 'Impact', sans-serif" font-weight="900" font-style="italic" font-size="62" fill="#ffffff" style="letter-spacing: -2px;">VIDEO</text>
+      <text x="205" y="226" text-anchor="middle" font-family="system-ui, -apple-system, 'Inter', 'Impact', sans-serif" font-weight="900" font-style="italic" font-size="62" fill="#ffffff" style="letter-spacing: -2px;">CLUB</text>
+    </g>
+  </g>
+</svg>
